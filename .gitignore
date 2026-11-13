@@ -1,0 +1,45 @@
+# Unreal Engine generated files
+Binaries/
+DerivedDataCache/
+Intermediate/
+Saved/
+Plugins/*/Binaries/
+Plugins/*/DerivedDataCache/
+Plugins/*/Intermediate/
+
+# Unreal project and IDE metadata
+.vs/
+.vscode/
+.idea/
+*.sln
+*.suo
+*.user
+*.userosscache
+*.opensdf
+*.sdf
+*.VC.db
+*.VC.opendb
+*.xcodeproj/
+*.xcworkspace/
+*.xcuserstate
+xcuserdata/
+
+# macOS metadata
+.DS_Store
+
+# Logs, crash dumps, and temporary files
+*.log
+*.dmp
+*.tmp
+*.swp
+*~
+__pycache__/
+*.py[cod]
+.venv/
+
+# Local automation output
+.playwright-cli/
+
+# Workspace-only helpers; not part of the game
+/bridge/
+/tools/

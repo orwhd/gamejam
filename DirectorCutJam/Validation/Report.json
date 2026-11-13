@@ -1,0 +1,44 @@
+﻿{
+	"devices": [
+		{
+			"deviceName": "Mac",
+			"instance": "2C24C4B76248091B70EA3082935F4D05",
+			"instanceName": "Mac-15437",
+			"platform": "MacEditor",
+			"oSVersion": "macOS 27.0 26A428",
+			"model": "Default",
+			"gPU": "Apple M4",
+			"cPUModel": "Apple M4",
+			"rAMInGB": 24,
+			"renderMode": "SM5",
+			"rHI": "Metal Bindful (SM5)",
+			"appInstanceLog": ""
+		}
+	],
+	"reportCreatedOn": "2026.11.12-19.10.52",
+	"succeeded": 1,
+	"succeededWithWarnings": 0,
+	"failed": 0,
+	"notRun": 0,
+	"inProcess": 0,
+	"totalDuration": 14.352889060974121,
+	"comparisonExported": false,
+	"comparisonExportDirectory": "",
+	"tests": [
+		{
+			"testDisplayName": "Acceptance",
+			"fullTestPath": "DirectorCut.PIE.Acceptance",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"2C24C4B76248091B70EA3082935F4D05"
+			],
+			"duration": 14.352889060974121,
+			"dateTime": "2026.11.12-19.10.37",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		}
+	]
+}
