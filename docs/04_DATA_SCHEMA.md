@@ -177,7 +177,7 @@ UE 中可以考虑 JSON、`UDataAsset`、`UPrimaryDataAsset`、`UDataTable`、`U
 
 ```json
 {
-  "reference_goal": "assets/envirments/room-example.png（同时可见墙壁、天花板、地面及左侧敞开门口拦路区的室内透视纵深构图）",
+  "reference_goal": "assets/example/envirments/example_0.png（同时可见墙壁、天花板、地面及左侧敞开门口拦路区的室内透视纵深构图）",
   "projection_mode": "Perspective",
   "camera_mode": "SingleFixedIndoorObliqueFrontLeftLookingDeep_NoCut",
   "exterior_to_interior_staging": "VisibleThroughOpenDoorwayInSameFrame",

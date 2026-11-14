@@ -64,7 +64,7 @@
 | C++ / Blueprint 分工 | **C++ 负责底层权威规则与状态机；关卡配置、文字块数据与 UI 表现开放给编辑器（Details / DataAsset / UMG）调整**（[已确认]） |
 | 目标平台、输入设备 | **目标交付平台：Windows**（macOS 仅作为开发机，需保证跨平台兼容）；**输入设备：键盘 + 鼠标**（键盘 `WASD` 移动、`E` 交互、`R` 随时重拍，鼠标操作 Persona 剧本页与结算按钮）（[已确认]） |
 | 当前关卡交付范围 | **优先完整交付第一个「消防员」关卡场景闭环**（后续关卡暂未设定，当前不设多关流转）（[已确认]） |
-| 项目现有资产与目录 | 已核验工程目录 `DirectorCutJam/`：含 `Source/DirectorCutJam/`（C++ 模块）、`Content/Maps/Firefighter.umap`、`Content/Materials/M_*`（基础材质）、`Scripts/create_map.py`、`assets/envirments/room-example.png`（室内参考图二，及 `assets/` 下新增参考图）、`Validation/`。**注：现有工程中的高空俯视机位与 3D 球/方块角色属于早期技术占位，违反红线 6、7，后续必须重构，不视为已批准的视觉规范。** |
+| 项目现有资产与目录 | 已核验工程目录 `DirectorCutJam/`：含 `Source/DirectorCutJam/`（C++ 模块）、`Content/Maps/Firefighter.umap`、`Content/Materials/M_*`（基础材质）、`Scripts/create_map.py`、`assets/example/`（角色、3D 室内与交互参考图库，含室内参考图 `assets/example/envirments/example_0.png`）、`Validation/`。**注：现有工程中的高空俯视机位与 3D 球/方块角色属于早期技术占位，违反红线 6、7，后续必须重构，不视为已批准的视觉规范。** |
 
 ## 1. 需求状态标记
 
@@ -83,7 +83,7 @@
 4. **[已确认]** NPC 保留自身记忆，按预设剧本行动；玩家的介入可以改变实际事件结果。
 5. **[已确认]** Persona 可以限制角色交互。玩家仍可移动，但可能无法执行某个交互；被心理因素阻止时显示思想泡泡。
 6. **[已确认]** 房间 / 场景为 3D；人物及可交互物品的**可见表现**为 2D 纸片；特效可为 3D。
-7. **[已确认]** 摄像机视觉参考为用户给出的图二（`assets/envirments/room-example.png`）：全程采用**单固定室内 3D 透视机位**（位于房间前方偏左朝室内深处拍摄，`FOV 55°–65°`，轻俯角 `5°–15°`），同屏可见墙壁、天花板、地面，并透过敞开的门口/玄关在同一画面看到门外入口与双手撑开拦门的队长；严禁保留图一高空俯视盒子的视觉效果。
+7. **[已确认]** 摄像机视觉参考为用户给出的室内参考图（`assets/example/envirments/example_0.png`）：全程采用**单固定室内 3D 透视机位**（位于房间前方偏左朝室内深处拍摄，`FOV 55°–65°`，轻俯角 `5°–15°`），同屏可见墙壁、天花板、地面，并透过敞开的门口/玄关在同一画面看到门外入口与双手撑开拦门的队长；严禁保留图一高空俯视盒子的视觉效果。
 8. **[已确认]** 目前为可交互灰盒。不得以正式美术、材质、像素画、精致动画作为现阶段必要产出。
 9. **[技术必需]** 逻辑位置与可见纸片保持关联；不以贴屏幕的 HUD 图像冒充房间里的世界对象。
 10. **[技术必需]** 游戏规则与 Sprite、UMG、特效、镜头表现解耦。
@@ -97,7 +97,9 @@
 2. [`docs/02_SPATIAL_MATH.md`](docs/02_SPATIAL_MATH.md) — 3D 世界与 2D 纸片映射、摄像机、遮挡和坐标约束。
 3. [`docs/03_ARCHITECTURE.md`](docs/03_ARCHITECTURE.md) — 逻辑 / 表现分层、ECS 边界、状态机与事件约定。
 4. [`docs/04_DATA_SCHEMA.md`](docs/04_DATA_SCHEMA.md) — 数据字段草案、类型与空值规则；不是最终数值表。
-5. [`docs/05_ASSET_PIPELINE.md`](docs/05_ASSET_PIPELINE.md) — 灰盒资源、Pivot、朝向、排序及将来的资产接口。
+5. [`docs/05_ASSET_PIPELINE.md`](docs/05_ASSET_PIPELINE.md) — 灰盒资源、Pivot、朝向、排序及资产接口。
+6. [`docs/06_ART_DIRECTION.md`](docs/06_ART_DIRECTION.md) — 美术总监已确认的角色画风（多罗猫式古早萌系搞怪反差人类小人、纯色无阴影插画纸片、2–4 帧小碎步）、3D 场景技术风格与美工交付清单。
+7. [`docs/07_UI_UX_SPEC.md`](docs/07_UI_UX_SPEC.md) — 「古早萌系片场手账」UI 风格、Pre-Take 剧本页 / Active Take 极简 HUD / 结算场记板的版式、状态、动效与验收清单。
 
 ## 4. Antigravity Agent 执行协议
 
