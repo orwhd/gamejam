@@ -233,6 +233,7 @@ flowchart TD
 {
   "scene_id": "FireCall",
   "controlled_character_id": "Firefighter",
+  "player_visual_presentation_mode": "Mesh3D_Placeholder | Paper2D",
   "has_extinguish_tool": false,
   "tool_placement_rule": "SideCornerPhysicalBranch_AwayFromMainRescuePath",
   "fire_layout_rule": "MultipleBlockingFires_FormingSCurveCorridor",
