@@ -13,7 +13,7 @@
 | 可交互物品（门、可拾取工具等） | 世界内 2D 纸片（同上） | 已确认 |
 | 阶段性危机与环境特效（如火势扩张、水柱） | 灰盒阶段允许采用逐阶扩张占位或 3D 特效（`NS_`）；单处阻挡物清除时同步隐藏视觉表现与碰撞 | 已确认 |
 | 头顶思想泡泡与近距 `[E]` 交互提示 | 锚定世界 3D 坐标、屏幕空间（Screen-space）朝向显示的 UMG Widget（含按住交互的环形读条反馈） | 已确认 |
-| `Pre-Take` 全屏纯文字剧本页、即时闪现星容器、手账结算卡 | 屏幕空间 UMG Widget（`Pre-Take` 全屏遮挡房间，开拍进入 `Active Take` 后隐藏） | 已确认 |
+| `Pre-Take` 全屏 Persona 纸页、`Active Take` 低打扰 `[R] Retake` 提示、即时闪现星容器、手账结算卡 | 屏幕空间 UMG Widget（`Pre-Take` 全屏遮挡房间，进入 `Active Take` 后隐藏纸页） | 已确认 |
 
 > 第一关《消防员》的全部具体纸片、合体状态与场景占位清单见 [`08_LEVEL_01_FIREFIGHTER.md`](08_LEVEL_01_FIREFIGHTER.md) §10。
 
@@ -30,7 +30,7 @@
 | 纸片（PaperSprite） | `S_` | `S_Captain_Block` |
 | 序列帧动画（PaperFlipbook） | `FB_` | `FB_Firefighter_Walk` |
 | 材质 / 材质实例 | `M_` / `MI_` | `M_PaperMasked`、`MI_PlayerPaper` |
-| UI 控件（Widget Blueprint） | `WBP_` | `WBP_PreTakeScript`、`WBP_StarPopup` |
+| UI 控件（Widget Blueprint） | `WBP_` | `WBP_PreTakeScript`、`WBP_ActionButton`、`WBP_RetakeHint`、`WBP_StarPopup`、`WBP_TakeResult` |
 | 特效（Niagara） | `NS_` | `NS_RoomFire` |
 
 推荐目录分层：`/Game/Maps`、`/Game/Data`、`/Game/Blueprints`、`/Game/Sprites`、`/Game/Materials`、`/Game/UI`、`/Game/VFX`。
@@ -51,7 +51,7 @@
 
 - **[已确认]** 角色与物品纸片统一使用 **`Masked`（二值镂空裁剪）+ `Two-Sided`（双面）材质**。
 - **技术收益**：`Masked` 材质直接写入硬件深度缓冲（Depth Buffer）并支持投射 3D 阴影，可与 3D 墙壁、门框、天花板及前后不同景深的纸片角色自然形成真实遮挡，无需手动维护复杂的半透明层级表。
-- **[已确认]** 头顶思想泡泡与近距 `[E]` 提示采用锚定 3D 坐标的屏幕空间投影显示，始终清晰可读；非常驻星容器提示与手账层 Persona 纸页/结算卡位于屏幕 UI 层。
+- **[已确认]** 头顶思想泡泡与近距 `[E]` 提示采用锚定 3D 坐标的屏幕空间投影显示，始终清晰可读；非常驻星容器提示、右上角低打扰 `[R] Retake` 提示与手账层 Persona 纸页/结算卡位于屏幕 UI 层。
 
 ## 5. 动画与正式美术衔接（详见 `06_ART_DIRECTION.md`）
 
@@ -69,10 +69,10 @@
 
 ## 6. 灰盒资源验收清单（通用管线）
 
-- [ ] 室内灰盒具备完整的 3D 地板、侧墙/后墙、敞开门口与**封闭天花板**，在 `FOV 55°–65° / 俯角 5°–15°` 单固定机位下同屏呈现室内纵深与门外区域。
+- [ ] 室内灰盒具备完整的 3D 地板、侧墙/后墙、敞开门口与**封闭天花板**，在 `FOV 55°–65° / 恒定俯角 5°–15° / 恒定离地高度` 的平移跟随相机与娃娃屋前侧敞开横切剖面下，顺畅衔接门外入口区与室内纵深且无墙体遮挡死角。
 - [ ] 玩家角色、NPC（含多状态与合体状态占位）均替换为底边中心接地的竖直 2D 纸片（`Masked` 双面材质），而非 3D 球体或方块。
 - [ ] 可交互物与动态阻挡的可见占位符合 2D 纸片 / 阶段演化规范；阻挡物清除后同步移除视觉与物理阻挡；近距 `[E]` 提示在不可交互状态下自动隐藏。
-- [ ] `Pre-Take` 全屏纯文字剧本页与 `Active Take` 3D 房间画面切换清晰。
+- [ ] `Pre-Take` 全屏 Persona 纸页与 `Active Take` 3D 房间画面切换清晰。
 - [ ] 人物脚底与地面视觉接触成立（单人/合体切换无悬空漂移）；左右转身采用水平镜像翻转（Flip），移动时纸片、逻辑坐标与碰撞体不脱离。
 - [ ] `Masked` 纸片与 3D 门框、墙壁及前后角色之间的深度遮挡关系正确。
 - [ ] 新增资产遵循 UE 通用命名前缀规范（`L_ / BP_ / DA_ / T_ / S_ / FB_ / M_ / MI_ / WBP_ / NS_`）。

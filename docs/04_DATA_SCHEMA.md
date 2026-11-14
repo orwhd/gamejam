@@ -19,7 +19,7 @@ UE 中可以考虑 JSON、`UDataAsset`、`UPrimaryDataAsset`、`UDataTable`、`U
 - **[已确认]** Persona 能影响角色的交互。
 - **[已确认]** NPC 的既定剧本与实际世界结果需要分开表示。
 - **[已确认]** 世界对象有实际 3D 位置，纸片只是可见表现。
-- **[编辑器待填值]** 各文字块与泡泡的具体英文词句、子目标数量、持续交互读条秒数、危机延缓秒数、阶段推进阈值秒数、移动/交互距离数值、摄像机精确厘米坐标与偏航角均保持 `null`，交由编辑器配置与灰盒实测校准（第一关详细配置清单见 [`08_LEVEL_01_FIREFIGHTER.md`](08_LEVEL_01_FIREFIGHTER.md) §9.3）。
+- **[编辑器待填值]** 各文字块与泡泡的具体英文词句、子目标数量、持续交互读条秒数、危机延缓秒数、阶段推进阈值秒数、移动/交互距离数值、摄像机恒定离地高度、锁死偏航角、水平跟随偏移、平滑阻尼与水平限位边界均保持 `null`，交由编辑器配置与灰盒实测校准（第一关详细配置清单见 [`08_LEVEL_01_FIREFIGHTER.md`](08_LEVEL_01_FIREFIGHTER.md) §9.3）。
 
 ## 3. ProjectConfig（已确认项与待定项）
 
@@ -30,7 +30,7 @@ UE 中可以考虑 JSON、`UDataAsset`、`UPrimaryDataAsset`、`UDataTable`、`U
   "engine_name": "Unreal Engine",
   "engine_version": "5.8",
   "target_platform": "Windows (developed on macOS)",
-  "input_scheme": "Keyboard (WASD move, E interact/hold, R restart take) + Mouse (Full-screen Pre-Take script & UI)",
+  "input_scheme": "Keyboard (WASD move, E interact/hold, R restart take) + Mouse (Full-screen Pre-Take Persona sheet & UI)",
   "current_level_scope": "SingleLevel_FirefighterSceneFirst",
   "gameplay_implementation": "C++ authoritative rules & state machine + Editor-exposed config / DataAsset / UMG",
   "persona_evaluation_mode": "Deterministic rule/tag mapping (no LLM)",
@@ -56,7 +56,7 @@ UE 中可以考虑 JSON、`UDataAsset`、`UPrimaryDataAsset`、`UDataTable`、`U
     }
   ],
   "edit_timing_rule": "PreTakeOnly",
-  "pre_take_presentation_mode": "FullScreenTextScript_RoomHidden",
+  "pre_take_presentation_mode": "FullScreenPersonaSheet_RoomHidden",
   "active_take_presentation_mode": "HiddenAndLocked_Full3DRoomView",
   "active_take_tab_readonly_peek": null,
   "undo_rule": "RestartTakeFullResetOnly",
@@ -71,7 +71,7 @@ UE 中可以考虑 JSON、`UDataAsset`、`UPrimaryDataAsset`、`UDataTable`、`U
 - `can_reorder`：重排扩展字段；**[已确认]** 灰盒原型阶段不启用重排玩法，默认填 `false`。
 - `is_present`：当前块在本轮 Take 中是否仍存在；仅在 `Pre-Take` 阶段可置为 `false`，触发 `Restart Take` 时重置回初始值。
 - `granted_tags`：该块激活（`is_present == true`）时赋予角色的 `0..N` 个确定性状态标签列表（可含心理限制标签或正面认知/能力标签；删块即失去这些标签，绝不自动产生反向能力标签）。
-- `active_take_tab_readonly_peek`：`Active Take` 期间默认隐藏并锁定剧本页；是否允许按 `Tab` 键只读查看当前残存文字块（不可剪辑）见 [`07_UI_UX_SPEC.md`](07_UI_UX_SPEC.md) §5.4 `[待决定]`。
+- `active_take_tab_readonly_peek`：`Active Take` 期间默认隐藏并锁定 Persona 纸页；是否允许按 `Tab` 键只读查看当前残存文字块（不可剪辑）见 [`07_UI_UX_SPEC.md`](07_UI_UX_SPEC.md) §5.4 `[待决定]`。
 
 > 不允许默认把删除 `not fireproof` 解释成 `fireproof = true`。
 
@@ -162,23 +162,27 @@ UE 中可以考虑 JSON、`UDataAsset`、`UPrimaryDataAsset`、`UDataTable`、`U
 - 角色、NPC、合体护送状态与可交互物品采用竖直立于 3D 地面的 2D 纸片（底边中心接地、`Masked` 双面材质写深度、左右转身水平翻转）。
 - 头顶思想泡泡与近距 `[E]` 提示锚定世界 3D 坐标并投影至屏幕空间（Screen-space）显示。
 
-## 9. CameraConfig（已确认区间与待校准坐标）
+## 9. CameraConfig（已确认不变量与待校准参数）
 
 ```json
 {
-  "reference_goal": "assets/example/envirments/example_0.png（同时可见墙壁、天花板、地面及左侧敞开门口门外区的室内透视纵深构图）",
+  "reference_goal": "assets/example/envirments/example_0.png（同时可见墙壁、封闭天花板与地面的室内轻俯角透视纵深构图）",
   "projection_mode": "Perspective",
-  "camera_mode": "SingleFixedIndoorObliqueFrontLeftLookingDeep_NoCut",
-  "exterior_to_interior_staging": "VisibleThroughOpenDoorwayInSameFrame",
+  "camera_mode": "FollowProtagonist_LockedHeightAndGroundAngle_XYClamp_NoCut",
+  "exterior_to_interior_staging": "DollhouseFrontOpenCutaway_PartitionWithDoorAndSightlineOpening",
   "fov_deg_range": [55, 65],
-  "pitch_down_deg_range": [5, 15],
-  "location_cm": null,
-  "yaw_deg": null
+  "locked_pitch_down_deg_range": [5, 15],
+  "locked_roll_deg": 0,
+  "locked_yaw_deg": null,
+  "constant_height_z_cm": null,
+  "follow_offset_xy_cm": null,
+  "follow_lag_speed": null,
+  "world_xy_clamp_bounds_cm": null
 }
 ```
 
-- **[已确认]** 全程采用单固定室内 3D 透视机位（不切镜头），位于房间前方偏左朝室内深处拍摄，`FOV 55°–65°`，俯视角 `5°–15°`，同时可见墙壁、天花板和地面，并透过敞开的门口/玄关在同一画面看到门外入口区与安全区。
-- `location_cm` 与 `yaw_deg` 在灰盒关卡搭建时按上述视觉约束实测填入。
+- **[已确认]** 全程采用定高（`Z` 位于地板与封闭天花板之间且恒定不变）、定对地俯角（`5°–15°` 恒定不变）、锁死水平朝向（`Yaw` 恒定不旋转、`Roll = 0°`）的 3D 室内透视平移跟随相机（不切镜头），沿水平面 `X/Y` 平滑平移跟随主角并做边缘限位（Clamp）；门外与室内通过朝镜头一侧敞开的娃娃屋横切剖面衔接（中间隔墙开门口并配视窗或前半截低矮剖面避让）。
+- `constant_height_z_cm`、`locked_yaw_deg`、`follow_offset_xy_cm`、`follow_lag_speed` 与 `world_xy_clamp_bounds_cm` 均保持 `null`，在灰盒关卡搭建时按上述视觉约束实测填入。
 
 ## 10. 星容器与评价规则契约（通用结构）
 

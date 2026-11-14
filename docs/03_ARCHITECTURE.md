@@ -80,7 +80,7 @@ Presentation Adapters
 ### 4.1 Take 阶段与 Persona 块状态
 
 ```text
-[Pre-Take 全屏纯文字剧本页] --(Start Take 开拍切入 3D 房间)--> [Active Take 正式演出] --(结算条件满足)--> [Take Result 结算]
+[Pre-Take 全屏 Persona 纸页] --(Start Take 开始切入 3D 房间)--> [Active Take 正式演出] --(结算条件满足)--> [Take Result 结算]
              ^                                                        |                                      |
              +--------------(Restart Take / 按 R 键重拍重置)----------+--------------------------------------+
 ```
@@ -90,8 +90,8 @@ PRESENT --[仅在 Pre-Take 合法删除]--> DELETED
 DELETED --[仅通过 Restart Take 整轮重置]--> PRESENT
 ```
 
-- **[已确认]** `Pre-Take` 阶段显示全屏纯文字剧本页（隐藏 3D 房间画面，世界时间暂停），仅在此阶段且文字块 `can_delete == true` 时允许触发 `PRESENT -> DELETED`；点击 `ACTION!` 进入 `Active Take` 后切入 3D 房间画面，默认隐藏剧本页并锁定编辑权限（演出期间是否支持按 `Tab` 只读查看见 [`07_UI_UX_SPEC.md`](07_UI_UX_SPEC.md) §5.4 `[待决定]`）。
-- **[已确认]** 单轮演出内不支持单块撤销恢复；`DELETED -> PRESENT` 仅在触发 `Restart Take`（按 `R` 键或点击重拍按钮，退回全屏 `Pre-Take` 并整轮重置 Persona 与场景状态）时发生。
+- **[已确认]** `Pre-Take` 阶段显示全屏纯文字 Persona 纸页（隐藏 3D 房间画面，世界时间暂停），仅在此阶段且文字块 `can_delete == true` 时允许触发 `PRESENT -> DELETED`；点击 `ACTION!` 进入 `Active Take` 后切入 3D 房间画面，默认隐藏该纸页并锁定编辑权限（演出期间是否支持按 `Tab` 只读查看见 [`07_UI_UX_SPEC.md`](07_UI_UX_SPEC.md) §5.4 `[待决定]`）。
+- **[已确认]** 单轮演出内不支持单块撤销恢复；`DELETED -> PRESENT` 仅在触发 `Restart Take`（按 `R` 键或点击手账结算卡 `[R] Retake` 按钮，退回全屏 `Pre-Take` 并整轮重置 Persona 与场景状态）时发生。
 - **[已确认]** 灰盒原型阶段不启用重排状态机（仅保留 `can_reorder` 数据字段扩展位，当前关卡全为 `false`）；当前仅交付第一个「消防员」关卡闭环，不设跨关卡流转状态机。
 
 ### 4.2 交互判定（确定性标签与场景前置条件检查）
@@ -136,7 +136,7 @@ Scene Actual State         -> 动态星容器即时闪现反馈 & 终局结算
 |---|---|---|
 | 请求删除块（仅 `Pre-Take`） | 主角标识、Block ID | TBD |
 | 块状态变化 | 主角标识、Block ID、状态 | TBD |
-| 开始演出 / 重拍重置（支持 `R` 键） | 关卡/Take 标识 | TBD |
+| 开始演出（`ACTION!`）/ 重开重置（`Restart Take`，支持 `R` 键与结算按钮） | 关卡/Take 标识 | TBD |
 | 请求执行 / 持续按住 / 中断交互 | 主角、目标、动作标识与输入动作类型（瞬时触发 / 持续按住 / 中断） | TBD |
 | 交互被拒绝（心理限制或缺少前置条件） | 请求标识、拒绝原因类型、思想泡泡文本标识 | TBD |
 | 子目标状态与场景危机阶段推进 | 剩余子目标计数、当前危机阶段、NPC/目标状态变化、危机延缓秒数 | TBD |
@@ -157,7 +157,6 @@ Scene Actual State         -> 动态星容器即时闪现反馈 & 终局结算
 ## 7. Antigravity Agent 执行和验证协议
 
 - Antigravity 的项目规则入口是仓库根目录 `AGENTS.md`。修改架构前，必须先阅读本文件及相关 `docs/` 文档；不要假定设计文档随启动自动注入。
-
 
 - 先扫描已有项目，列出现有 Gameplay Framework / Blueprints / Assets。
 - 以最小可替换模块验证：Persona 编辑 -> 角色状态变化 -> 交互判定 -> 可视反馈。
