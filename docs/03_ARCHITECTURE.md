@@ -80,9 +80,9 @@ Presentation Adapters
 ### 4.1 Take 阶段与 Persona 块状态
 
 ```text
-[Pre-Take 开拍前准备] --(Start Take 开拍)--> [Active Take 正式演出] --(结算条件满足)--> [Take Result 结算]
-         ^                                            |                                      |
-         +------------(Restart Take 重拍重置)----------+--------------------------------------+
+[Pre-Take 全屏纯文字剧本页] --(Start Take 开拍切入 3D 房间)--> [Active Take 正式演出] --(结算条件满足)--> [Take Result 结算]
+             ^                                                        |                                      |
+             +--------------(Restart Take / 按 R 键重拍重置)----------+--------------------------------------+
 ```
 
 ```text
@@ -90,9 +90,9 @@ PRESENT --[仅在 Pre-Take 合法删除]--> DELETED
 DELETED --[仅通过 Restart Take 整轮重置]--> PRESENT
 ```
 
-- **[已确认]** 仅在 `Pre-Take` 阶段且文字块 `can_delete == true` 时允许触发 `PRESENT -> DELETED`；进入 `Active Take` 后锁定编辑权限。
-- **[已确认]** 单轮演出内不支持单块撤销恢复；`DELETED -> PRESENT` 仅在触发 `Restart Take`（整轮重置 Persona 与场景状态）时发生。
-- **[已确认]** 灰盒原型阶段不启用重排状态机（仅保留 `can_reorder` 数据字段扩展位，当前关卡全为 `false`）。
+- **[已确认]** `Pre-Take` 阶段显示全屏纯文字剧本页（隐藏 3D 房间画面，世界时间暂停），仅在此阶段且文字块 `can_delete == true` 时允许触发 `PRESENT -> DELETED`；点击开拍进入 `Active Take` 后切入 3D 房间画面，隐藏剧本页并锁定编辑权限。
+- **[已确认]** 单轮演出内不支持单块撤销恢复；`DELETED -> PRESENT` 仅在触发 `Restart Take`（按 `R` 键或点击重拍按钮，退回全屏 `Pre-Take` 并整轮重置 Persona 与场景状态）时发生。
+- **[已确认]** 灰盒原型阶段不启用重排状态机（仅保留 `can_reorder` 数据字段扩展位，当前关卡全为 `false`）；当前仅交付第一个「消防员」关卡闭环，不设跨关卡流转状态机。
 
 ### 4.2 交互判定（确定性标签检查）
 
@@ -107,23 +107,25 @@ InteractionRequest
 - **[已确认]** 交互判定同时检查场景客观条件、所需前置标签是否具备、以及是否存在阻止该交互的心理限制标签。
 - **[已确认]** 因心理限制被拒绝时，`ThoughtBubble` 输出「表层抗拒态度 + 隐晦指向过去经历的线索」。
 
-### 4.3 NPC 与事件结果
+### 4.3 NPC、多处火点与事件结果
 
 ```text
 Preauthored NPC Script -> NPC intended actions (如队长无台词撑手拦在入口前)
-Fire Stage Progression -> Active -> CivilianInjured (容器 3->2) -> CivilianDead (容器 2->1) -> RoomEngulfed (强制收工)
-Player interventions   -> 拾取/开启灭火工具、扑灭火灾、护送受困者至安全区
+Fire Stage Progression -> Active -> CivilianInjured (容器 3->2, 受伤纸片) -> CivilianDead (容器 2->1, 倒下纸片并关闭交互) -> RoomEngulfed (强制收工)
+Player interventions   -> 侧角拾取灭火工具、按住 E 读条扑灭单处火点（消除阻挡并延缓 RoomEngulfed）、紧随护送受困者踏入安全区
 Scene actual state     -> 动态星容器即时闪现反馈 & 终局结算
 ```
 
 - **[已确认]** NPC 的预设行为与实际场景结果分离；消防员关卡中队长全程无台词、双手撑开拦截在门前，不随主角删除记忆而改变站位或态度。
+- **[已确认]** 室内维护多处独立火点状态（`RemainingFireCount`）：未扑灭的火点阻塞局部通行（整体保留 S 形绕行通道）；持工具按住 `E` 完成单处读条（松手或离开则中断）后，销毁/熄灭该火点阻挡，并为 `RoomEngulfed` 阶段增加可配置的延缓时间；当 `RemainingFireCount == 0` 时判定火灾彻底扑灭。
+- **[已确认]** 受困者存活时按 `E` 进入紧随主角状态（不与手持灭火工具冲突），踏入门外安全区自动结算；受困者进入 `CivilianDead` 状态后立即禁用交互（隐藏 `[E]` 提示且按 `E` 无响应）。
 - **[已确认]** 主角不设血条死亡；已护送至安全区的救援星数在火势铺满全屋收工时予以保留。
 
 ### 4.4 动态星容器与关卡结算模型
 
 - **[已确认]** 权威状态维护 `EarnedStars`（初始 `0`）与 `MaxStarContainers`（初始 `3`）：
-  - 扑灭火灾：`EarnedStars += 1`，触发即时星容器闪现事件。
-  - 受困者护送至安全区：若未受伤 `EarnedStars += 2`，若已受伤 `EarnedStars += 1`，触发即时星容器闪现事件。
+  - 扑灭室内全部火点（`RemainingFireCount == 0`）：`EarnedStars += 1`，触发即时星容器闪现事件。
+  - 受困者紧随护送踏入门外安全区：若未受伤 `EarnedStars += 2`，若已受伤 `EarnedStars += 1`，触发即时星容器闪现事件。
   - 火势波及未获救受困者使其受伤：`MaxStarContainers` 由 `3` 减至 `2`，触发即时星容器扣减闪现事件。
   - 火势继续波及未获救受困者致其身亡：`MaxStarContainers` 由 `2` 减至 `1`，触发即时星容器扣减闪现事件。
 - **[已确认]** 单轮结束判定：`EarnedStars == MaxStarContainers`（达成当前剩余容器满星）**或** `火势阶段 == RoomEngulfed（铺满整个房间）`。
@@ -135,10 +137,10 @@ Scene actual state     -> 动态星容器即时闪现反馈 & 终局结算
 |---|---|---|
 | 请求删除块（仅 `Pre-Take`） | 主角标识、Block ID | TBD |
 | 块状态变化 | 主角标识、Block ID、状态 | TBD |
-| 开始演出 / 重拍重置 | 关卡/Take 标识 | TBD |
-| 请求执行交互 | 主角、目标、动作标识（进门/取工具/灭火/护送） | TBD |
-| 交互被拒绝 | 请求标识、原因 / 思想泡泡文本标识 | TBD |
-| 火势阶段推进 | 当前火势阶段、受困者健康状态变化 | TBD |
+| 开始演出 / 重拍重置（支持 `R` 键） | 关卡/Take 标识 | TBD |
+| 请求执行 / 持续按住 / 中断交互 | 主角、目标、动作标识（进门/取工具/按住灭火读条/紧随护送） | TBD |
+| 交互被拒绝 / 缺少工具提示 | 请求标识、原因 / 提示文本标识 | TBD |
+| 单处火点扑灭与火势阶段推进 | 剩余火点数 `RemainingFireCount`、当前火势阶段、受困者状态变化、延缓秒数 | TBD |
 | 星容器即时闪现通知 | 当前已得星数 `EarnedStars`、当前容器上限 `MaxStarContainers`、变化类型 | TBD |
 | 单轮结束结算 | 结束原因（满容器 / 火满全屋）、最终星数与容器上限 | TBD |
 

@@ -18,7 +18,7 @@ UE 中可以考虑 JSON、`UDataAsset`、`UPrimaryDataAsset`、`UDataTable`、`U
 - **[已确认]** Persona 能影响角色的交互。
 - **[已确认]** NPC 的既定剧本与实际世界结果需要分开表示。
 - **[已确认]** 世界对象有实际 3D 位置，纸片只是可见表现。
-- **[编辑器待填值]** 各文字块与泡泡的具体英文词句、火势阶段具体秒数、移动/交互距离数值、摄像机精确厘米坐标与偏航角均保持 `null`，交由编辑器配置与灰盒实测校准。
+- **[编辑器待填值]** 各文字块与泡泡的具体英文词句、初始火点具体数量、单处按住灭火读条秒数、单处灭火延缓全屋火满秒数、火势阶段具体秒数、移动/跟随/交互距离数值、摄像机精确厘米坐标与偏航角均保持 `null`，交由编辑器配置与灰盒实测校准。
 
 ## 3. ProjectConfig（已确认项与待定项）
 
@@ -29,7 +29,8 @@ UE 中可以考虑 JSON、`UDataAsset`、`UPrimaryDataAsset`、`UDataTable`、`U
   "engine_name": "Unreal Engine",
   "engine_version": "5.8",
   "target_platform": "Windows (developed on macOS)",
-  "input_scheme": "Keyboard (movement/interaction) + Mouse (Persona panel)",
+  "input_scheme": "Keyboard (WASD move, E interact/hold-extinguish, R restart take) + Mouse (Full-screen Pre-Take script & UI)",
+  "current_level_scope": "SingleLevel_FirefighterSceneFirst",
   "gameplay_implementation": "C++ authoritative rules & state machine + Editor-exposed config / DataAsset / UMG",
   "persona_evaluation_mode": "Deterministic rule/tag mapping (no LLM)",
   "persistence_scope": "Per-take / per-level restart (no cross-session save)",
@@ -54,6 +55,8 @@ UE 中可以考虑 JSON、`UDataAsset`、`UPrimaryDataAsset`、`UDataTable`、`U
     }
   ],
   "edit_timing_rule": "PreTakeOnly",
+  "pre_take_presentation_mode": "FullScreenTextScript_RoomHidden",
+  "active_take_presentation_mode": "HiddenAndLocked_Full3DRoomView",
   "undo_rule": "RestartTakeFullResetOnly",
   "reorder_enabled_in_prototype": false
 }
@@ -77,17 +80,23 @@ UE 中可以考虑 JSON、`UDataAsset`、`UPrimaryDataAsset`、`UDataTable`、`U
   "actor_id": null,
   "target_id": null,
   "action_id": null,
+  "input_mode": "InstantPressE | HoldEToComplete",
+  "hold_duration_sec": null,
+  "cancel_on_release_or_move": true,
+  "prompt_key": "E",
   "required_context": null,
   "required_persona_tags": [],
   "blocking_persona_tags": [],
   "denial_thought_id": null,
+  "missing_tool_hint_id": null,
   "result_event_id": null
 }
 ```
 
 - `required_persona_tags` / `blocking_persona_tags`：确定性标签门控——要求角色具备某些认知/能力标签，且不携带阻止该行为的心理限制标签。
 - `denial_thought_id`：指向思想泡泡文案；**[已确认]** 文案规范为「表层抗拒想法 + 隐晦指向过去经历的线索」。
-- 碰撞检测、交互距离、提示按钮：**TBD**。
+- **[已确认]** 交互提示与输入模式：靠近可交互目标时显示 `[E]` 提示；进门、取工具、触发紧随护送为按一下 `E` 触发（踏入门外安全区自动结算救援，受困者身亡切换倒下纸片后关闭交互与 `[E]` 提示）；单处火点灭火为**持工具按住 `E` 读条**（松手或走开即中断，具体 `hold_duration_sec` 在编辑器配置）。
+- 具体碰撞形状尺寸与触发半径数值：保持 `null`，在编辑器校准。
 
 ## 6. NPCScriptSchema（候选字段）
 
@@ -118,8 +127,14 @@ UE 中可以考虑 JSON、`UDataAsset`、`UPrimaryDataAsset`、`UDataTable`、`U
   "scene_id": null,
   "controlled_character_id": null,
   "has_extinguish_tool": false,
-  "fire_stage": "Active | InjuredCivilian | KilledCivilian | RoomEngulfed | Extinguished",
-  "civilian_state": "Uninjured | Injured | Dead | RescuedUninjured | RescuedInjured",
+  "tool_placement_rule": "SideCornerPhysicalBranch_AwayFromMainRescuePath",
+  "fire_layout_rule": "MultipleBlockingFires_FormingSCurveCorridor",
+  "initial_fire_spot_count": null,
+  "remaining_fire_spot_count": null,
+  "extinguish_hold_duration_sec_per_spot": null,
+  "engulf_delay_bonus_sec_per_spot_extinguished": null,
+  "fire_stage": "Active | InjuredCivilian | KilledCivilian | RoomEngulfed | AllExtinguished",
+  "civilian_state": "Uninjured | Injured | Dead_NonInteractable | FollowingPlayer | RescuedUninjured | RescuedInjured",
   "fire_stage_durations_sec": {
     "to_injure_civilian": null,
     "to_kill_civilian": null,
@@ -131,9 +146,9 @@ UE 中可以考虑 JSON、`UDataAsset`、`UPrimaryDataAsset`、`UDataTable`、`U
 }
 ```
 
-- `fire_stage_durations_sec` 具体秒数留空（`null`），由设计者在编辑器配置微调，不在 Schema 中写死。
-- `max_star_containers` 初始为 `3`；受困者受伤时减为 `2`，受困者身亡时减为 `1`。
-- `earned_stars`：灭火 `+1`；带伤救出 `+1`；无伤救出 `+2`。每次星数或容器数变化时触发非常驻 UI 即时闪现。
+- `initial_fire_spot_count`、`extinguish_hold_duration_sec_per_spot`、`engulf_delay_bonus_sec_per_spot_extinguished` 及 `fire_stage_durations_sec` 具体数值均留空（`null`），由设计者在编辑器配置微调，不在 Schema 中写死。
+- `max_star_containers` 初始为 `3`；受困者受伤时减为 `2`，受困者身亡（切换倒下纸片并移除交互）时减为 `1`。
+- `earned_stars`：**扑灭全部火点**（`remaining_fire_spot_count == 0`）`+1`；带伤紧随护送踏入安全区 `+1`；无伤紧随护送踏入安全区 `+2`。每次星数或容器数变化时触发非常驻 UI 即时闪现。
 
 ## 8. SpatialPresentationSchema（候选字段）
 
@@ -162,7 +177,7 @@ UE 中可以考虑 JSON、`UDataAsset`、`UPrimaryDataAsset`、`UDataTable`、`U
 
 ```json
 {
-  "reference_goal": "elements/room-example.png（同时可见墙壁、天花板、地面及左侧敞开门口拦路区的室内透视纵深构图）",
+  "reference_goal": "assets/envirments/room-example.png（同时可见墙壁、天花板、地面及左侧敞开门口拦路区的室内透视纵深构图）",
   "projection_mode": "Perspective",
   "camera_mode": "SingleFixedIndoorObliqueFrontLeftLookingDeep_NoCut",
   "exterior_to_interior_staging": "VisibleThroughOpenDoorwayInSameFrame",
