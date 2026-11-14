@@ -1,0 +1,592 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Persona — UI/UX Spec Board (Director's Cut)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Fredoka:wght@400;500;600;700&family=Patrick+Hand&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#FFF6E6; --ink:#2B2724; --peach:#F2A46F; --blush:#F4A9A0;
+  --sky:#9ED4EE; --butter:#FFD75E; --char:#6B625C; --hl:#FFE9A8;
+  --desk:#5A4638; --board:#EFE8DC; --note:#FFFDF8;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--board);font-family:'Fredoka',system-ui,sans-serif;color:var(--ink);padding:72px;width:2180px}
+.mono{font-family:'Courier Prime','Courier New',monospace}
+.hand{font-family:'Patrick Hand','Comic Sans MS',cursive}
+
+/* ---------- board header ---------- */
+.board-head{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:56px;border-bottom:4px solid var(--ink);padding-bottom:24px}
+.board-head h1{font-size:64px;font-weight:700;letter-spacing:1px}
+.board-head h1 small{display:block;font-size:22px;font-weight:500;opacity:.7;margin-top:6px}
+.board-head .meta{font-size:18px;text-align:right;line-height:1.6}
+.tag{display:inline-block;background:var(--ink);color:var(--paper);border-radius:999px;padding:4px 14px;font-size:15px;font-weight:600;margin-left:6px}
+
+/* ---------- rows ---------- */
+.row{display:flex;gap:44px;margin-bottom:96px;align-items:flex-start}
+.row-title{font-size:30px;font-weight:700;margin-bottom:18px;display:flex;align-items:center;gap:14px}
+.row-title .num{width:44px;height:44px;border-radius:50%;background:var(--ink);color:var(--paper);display:grid;place-items:center;font-size:22px}
+.frame{width:1600px;height:900px;position:relative;overflow:hidden;border-radius:14px;flex:none;box-shadow:0 0 0 4px var(--ink)}
+.notes{width:420px;flex:none;background:var(--note);border:3px solid var(--ink);border-radius:20px;padding:28px 28px 22px;font-size:18px;line-height:1.55}
+.notes h3{font-size:22px;margin-bottom:10px}
+.notes ul{padding-left:20px;margin-bottom:14px}
+.notes li{margin-bottom:6px}
+.notes .ref{font-size:14px;opacity:.65;border-top:2px dashed #cdbfae;padding-top:10px;margin-top:6px}
+.notes b{background:var(--hl);padding:0 3px}
+
+/* hand-drawn border helper */
+.ink-box{position:relative}
+.ink-box::before{content:"";position:absolute;inset:0;border:4px solid var(--ink);border-radius:inherit;filter:url(#wob);pointer-events:none}
+
+/* =========================================================
+   1. PRE-TAKE SCRIPT PAGE
+   ========================================================= */
+.pretake{background:var(--desk)}
+.sheet{position:absolute;left:70px;top:46px;right:70px;bottom:46px;background:var(--paper);border-radius:22px;padding:54px 120px 40px}
+.tape{position:absolute;width:150px;height:44px;background:#F3E3B5;opacity:.92;z-index:2}
+.tape.t1{left:40px;top:30px;transform:rotate(-12deg)}
+.tape.t2{right:40px;top:30px;transform:rotate(10deg)}
+.slate-line{display:flex;gap:18px;font-size:24px;font-weight:700;letter-spacing:3px;align-items:center}
+.slate-line .take{background:var(--ink);color:var(--paper);padding:4px 14px;border-radius:10px}
+.stamp{position:absolute;right:110px;top:44px;transform:rotate(8deg);border:4px solid #C8584A;color:#C8584A;font-family:'Fredoka';font-weight:700;font-size:22px;letter-spacing:3px;padding:6px 14px;border-radius:12px}
+.rule{height:0;border-top:3px dashed #d8c7ad;margin:22px 0 34px}
+.cue{text-align:center;font-size:30px;font-weight:700;letter-spacing:6px}
+.paren{text-align:center;font-size:20px;font-style:italic;opacity:.65;margin:6px 0 26px}
+.script{font-size:31px;line-height:1.85;max-width:1150px;margin:0 auto}
+.blk{padding:2px 4px;border-radius:6px;-webkit-box-decoration-break:clone;box-decoration-break:clone}
+.blk.fixed{}
+.blk.cuttable{background:linear-gradient(transparent 58%,var(--hl) 58%);border-bottom:3px dashed #C9A54A}
+.blk.hover{background:var(--blush);border-bottom:3px dashed var(--ink);position:relative}
+.blk.cut{color:#9a8f86;text-decoration:line-through;text-decoration-thickness:6px;text-decoration-color:var(--ink)}
+.cursor-scissors{position:absolute;width:58px;height:58px;right:-46px;top:30px;z-index:3}
+.sample{position:absolute;left:120px;bottom:36px;font-size:15px;opacity:.55;font-family:'Fredoka'}
+.legend{position:absolute;left:120px;bottom:72px;display:flex;gap:22px;font-size:17px;font-family:'Fredoka';font-weight:500}
+.legend span{display:flex;align-items:center;gap:8px}
+.legend i{display:inline-block;width:46px;height:22px;border-radius:6px}
+.lg-fixed{border:2px solid var(--ink)}
+.lg-cut{background:linear-gradient(transparent 50%,var(--hl) 50%);border-bottom:3px dashed #C9A54A}
+.lg-done{position:relative;border:2px solid #b9aea4}
+.lg-done::after{content:"";position:absolute;left:3px;right:3px;top:8px;height:5px;background:var(--ink);border-radius:3px}
+.action-btn{position:absolute;right:110px;bottom:40px}
+
+/* =========================================================
+   2/3. ACTIVE TAKE (stage)
+   ========================================================= */
+.stage svg.room{position:absolute;inset:0;width:100%;height:100%}
+.take-tag{position:absolute;right:34px;top:30px;background:var(--paper);border-radius:14px;padding:10px 18px;font-size:20px;font-weight:600;transform:rotate(2deg);display:flex;gap:12px;align-items:center}
+.take-tag .mono{font-weight:700;letter-spacing:2px}
+.take-tag .key{background:var(--ink);color:var(--paper);border-radius:7px;padding:1px 9px;font-size:17px}
+.bubble{position:absolute;background:var(--paper);border:5px solid var(--peach);border-radius:34px;padding:18px 28px 20px;max-width:430px;font-size:30px;line-height:1.25;text-align:center}
+.bubble .sub{display:block;font-size:24px;opacity:.75;margin-top:6px}
+.bubble .dots{position:absolute;left:58px;bottom:-62px;width:70px;height:60px}
+.prompt{position:absolute;display:flex;align-items:center;gap:12px}
+.prompt .label{background:var(--paper);border-radius:999px;padding:6px 16px;font-size:20px;font-weight:600;letter-spacing:1px}
+.star-pop{position:absolute;left:50%;top:34px;transform:translateX(-50%);background:var(--paper);border-radius:999px;padding:12px 26px;display:flex;gap:12px;align-items:center}
+.callout{position:absolute;background:var(--ink);color:var(--paper);font-size:15px;border-radius:10px;padding:6px 12px;font-weight:500}
+
+/* =========================================================
+   4. RESULT
+   ========================================================= */
+.dim{position:absolute;inset:0;background:rgba(43,39,36,.62)}
+.result-clapper{position:absolute;left:50%;top:70px;transform:translateX(-50%) rotate(-3deg)}
+.result-card{position:absolute;left:50%;top:330px;transform:translateX(-50%);width:760px;background:var(--ink);border-radius:26px;padding:34px 48px 36px;color:var(--paper)}
+.result-card::before{border-color:var(--paper)!important}
+.result-stars{display:flex;justify-content:center;gap:22px;margin-bottom:22px}
+.result-lines{font-size:25px;line-height:1.75;letter-spacing:1px;border-top:3px dashed #6e655e;padding-top:18px}
+.result-lines b{color:var(--butter);font-weight:700}
+.retake{position:absolute;left:50%;bottom:56px;transform:translateX(-50%);background:var(--paper);border-radius:999px;padding:16px 42px;font-size:28px;font-weight:700;display:flex;gap:14px;align-items:center}
+.retake .key{background:var(--ink);color:var(--paper);border-radius:9px;padding:2px 12px;font-size:24px}
+
+/* =========================================================
+   5. COMPONENT SHEET
+   ========================================================= */
+.sheet-comp{background:var(--paper);padding:44px 52px;display:grid;grid-template-columns:1fr 1fr 1fr;grid-template-rows:auto auto;gap:34px 44px}
+.cell h4{font-size:21px;font-weight:700;margin-bottom:14px;display:flex;justify-content:space-between;align-items:baseline}
+.cell h4 em{font-style:normal;font-size:14px;font-weight:500;opacity:.55}
+.swatches{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.sw{border-radius:14px;height:86px;position:relative;border:3px solid var(--ink)}
+.sw span{position:absolute;left:8px;bottom:6px;font-size:12px;font-weight:600;line-height:1.2;background:rgba(255,246,230,.9);border-radius:6px;padding:2px 6px}
+.statebox{display:flex;flex-direction:column;gap:12px;font-size:21px}
+.statebox .lbl{font-size:13px;font-weight:600;opacity:.6;letter-spacing:1px}
+.hstack{display:flex;gap:18px;align-items:center}
+.hstack figure{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:13px;font-weight:600}
+.typo div{margin-bottom:10px}
+.mini-bubble{position:relative;background:var(--paper);border:4px solid var(--peach);border-radius:26px;padding:12px 20px;font-size:22px;display:inline-block}
+.mini-tag{display:inline-flex;background:var(--paper);border:3px solid var(--ink);border-radius:12px;padding:6px 14px;font-weight:600;gap:10px;font-size:17px}
+.mini-tag .key{background:var(--ink);color:var(--paper);border-radius:6px;padding:0 7px}
+</style>
+</head>
+<body>
+
+<!-- ================= shared SVG defs ================= -->
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <filter id="wob" x="-5%" y="-5%" width="110%" height="110%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.018" numOctaves="2" seed="3"/>
+      <feDisplacementMap in="SourceGraphic" scale="3.2"/>
+    </filter>
+
+    <!-- chubby star -->
+    <symbol id="star" viewBox="0 0 100 100">
+      <polygon points="50,10 62.3,35 89.9,39 70,58.5 74.7,86 50,73 25.3,86 30,58.5 10.1,39 37.7,35" stroke-linejoin="round" stroke-width="6"/>
+    </symbol>
+
+    <!-- ROOM: fixed camera front-left looking deep, open door on left wall -->
+    <symbol id="room" viewBox="0 0 1600 900">
+      <!-- ceiling -->
+      <polygon points="0,0 1600,0 1240,250 640,250" fill="#8A6A52"/>
+      <g stroke="#7A5C46" stroke-width="6" filter="url(#wob)">
+        <line x1="160" y1="0" x2="700" y2="250"/><line x1="480" y1="0" x2="820" y2="250"/>
+        <line x1="800" y1="0" x2="940" y2="250"/><line x1="1120" y1="0" x2="1060" y2="250"/>
+        <line x1="1440" y1="0" x2="1180" y2="250"/>
+      </g>
+      <!-- lamp -->
+      <line x1="940" y1="120" x2="940" y2="170" stroke="#2B2724" stroke-width="4"/>
+      <ellipse cx="940" cy="182" rx="56" ry="18" fill="#F2A46F" stroke="#2B2724" stroke-width="4"/>
+      <!-- back wall -->
+      <rect x="640" y="250" width="600" height="310" fill="#D7C39E"/>
+      <rect x="840" y="300" width="200" height="140" rx="10" fill="#3E4E6E" stroke="#2B2724" stroke-width="5"/>
+      <line x1="940" y1="300" x2="940" y2="440" stroke="#2B2724" stroke-width="4"/>
+      <rect x="700" y="330" width="80" height="100" rx="8" fill="#9ED4EE" stroke="#2B2724" stroke-width="4"/>
+      <!-- right wall -->
+      <polygon points="1600,0 1240,250 1240,560 1600,900" fill="#B8A07B"/>
+      <!-- left wall -->
+      <polygon points="0,0 640,250 640,560 0,900" fill="#C7B08A"/>
+      <!-- open doorway on left wall -->
+      <polygon points="250,286 430,320 430,676 250,768" fill="#3B4A66"/>
+      <polygon points="250,708 430,640 430,676 250,768" fill="#54627D"/>
+      <polygon points="250,286 430,320 430,676 250,768" fill="none" stroke="#2B2724" stroke-width="7" stroke-linejoin="round"/>
+      <!-- open door leaf -->
+      <polygon points="430,320 520,300 520,700 430,676" fill="#A5613E" stroke="#2B2724" stroke-width="6" stroke-linejoin="round"/>
+      <circle cx="505" cy="510" r="7" fill="#FFD75E" stroke="#2B2724" stroke-width="3"/>
+      <!-- floor -->
+      <polygon points="0,900 1600,900 1240,560 640,560" fill="#7E5D47"/>
+      <g stroke="#6E4F3B" stroke-width="5" filter="url(#wob)">
+        <line x1="760" y1="560" x2="260" y2="900"/><line x1="880" y1="560" x2="640" y2="900"/>
+        <line x1="1000" y1="560" x2="1020" y2="900"/><line x1="1120" y1="560" x2="1400" y2="900"/>
+      </g>
+      <!-- low partition (S-route hint) -->
+      <polygon points="900,620 1180,620 1180,690 900,690" fill="#C98A5A" stroke="#2B2724" stroke-width="5"/>
+      <polygon points="900,620 1180,620 1150,598 930,598" fill="#E0A574" stroke="#2B2724" stroke-width="5" stroke-linejoin="round"/>
+      <!-- safe zone mark outside door -->
+      <polygon points="262,730 420,660 420,672 262,748" fill="#9ED4EE" opacity=".9"/>
+    </symbol>
+
+    <!-- FIRE (placeholder flat paper flame) -->
+    <g id="fire">
+      <path d="M-70,0 C-80,-60 -40,-80 -45,-130 C-20,-100 -10,-120 -5,-180 C25,-130 30,-100 40,-140 C55,-100 85,-70 70,0 Z" fill="#F28C38" stroke="#2B2724" stroke-width="5" stroke-linejoin="round"/>
+      <path d="M-38,0 C-44,-40 -18,-55 -14,-90 C2,-66 10,-80 16,-104 C30,-70 46,-46 38,0 Z" fill="#FFD15C"/>
+    </g>
+
+    <!-- FIREFIGHTER (worried) — feet at 0,0 -->
+    <g id="ff-worried">
+      <g stroke-linecap="round">
+        <line x1="-15" y1="-92" x2="-18" y2="-4" stroke="#2F3A4A" stroke-width="18"/>
+        <line x1="15" y1="-92" x2="18" y2="-4" stroke="#2F3A4A" stroke-width="18"/>
+        <path d="M-36,-195 L36,-195 L42,-86 L-42,-86 Z" fill="#E3B04B"/>
+        <rect x="-42" y="-118" width="84" height="11" fill="#FFF6E6"/>
+        <line x1="-34" y1="-185" x2="-40" y2="-118" stroke="#E3B04B" stroke-width="15"/>
+        <line x1="34" y1="-185" x2="40" y2="-118" stroke="#E3B04B" stroke-width="15"/>
+        <circle cx="-40" cy="-114" r="9" fill="#F3D2B0"/><circle cx="40" cy="-114" r="9" fill="#F3D2B0"/>
+        <rect x="-50" y="-298" width="100" height="106" rx="38" fill="#F3D2B0"/>
+        <rect x="-56" y="-322" width="112" height="56" rx="26" fill="#D9644A"/>
+        <rect x="-66" y="-276" width="132" height="12" rx="6" fill="#B94F38"/>
+        <circle cx="0" cy="-300" r="11" fill="#FFD75E"/>
+        <!-- face: worried -->
+        <g stroke="#2B2724" stroke-width="4" fill="none">
+          <path d="M-32,-246 L-14,-238"/><path d="M32,-246 L14,-238"/>
+          <path d="M-14,-208 q7,-6 14,0 q7,6 14,0"/>
+        </g>
+        <ellipse cx="-22" cy="-228" rx="4" ry="6" fill="#2B2724"/><ellipse cx="22" cy="-228" rx="4" ry="6" fill="#2B2724"/>
+        <circle cx="0" cy="-218" r="5" fill="#E9AE8A"/>
+        <ellipse cx="-33" cy="-214" rx="9" ry="6" fill="#F4A9A0"/><ellipse cx="33" cy="-214" rx="9" ry="6" fill="#F4A9A0"/>
+        <path d="M46,-262 q8,10 0,18 q-8,-8 0,-18z" fill="#9ED4EE" stroke="#2B2724" stroke-width="2.5"/>
+      </g>
+    </g>
+
+    <!-- FIREFIGHTER spraying with extinguisher (facing right) -->
+    <g id="ff-spray">
+      <g stroke-linecap="round">
+        <line x1="-18" y1="-92" x2="-26" y2="-4" stroke="#2F3A4A" stroke-width="18"/>
+        <line x1="14" y1="-92" x2="24" y2="-4" stroke="#2F3A4A" stroke-width="18"/>
+        <path d="M-36,-195 L36,-195 L42,-86 L-42,-86 Z" fill="#E3B04B"/>
+        <rect x="-42" y="-118" width="84" height="11" fill="#FFF6E6"/>
+        <rect x="-22" y="-176" width="40" height="78" rx="14" fill="#D94B3D" stroke="#2B2724" stroke-width="4"/>
+        <rect x="-10" y="-190" width="16" height="16" rx="4" fill="#6B625C"/>
+        <path d="M6,-184 q40,-10 70,6" stroke="#2B2724" stroke-width="7" fill="none"/>
+        <line x1="34" y1="-182" x2="72" y2="-176" stroke="#E3B04B" stroke-width="15"/>
+        <line x1="-30" y1="-182" x2="-6" y2="-140" stroke="#E3B04B" stroke-width="15"/>
+        <circle cx="74" cy="-176" r="9" fill="#F3D2B0"/>
+        <rect x="-50" y="-298" width="100" height="106" rx="38" fill="#F3D2B0"/>
+        <rect x="-56" y="-322" width="112" height="56" rx="26" fill="#D9644A"/>
+        <rect x="-66" y="-276" width="132" height="12" rx="6" fill="#B94F38"/>
+        <circle cx="0" cy="-300" r="11" fill="#FFD75E"/>
+        <!-- face: determined (squeezed eyes) -->
+        <g stroke="#2B2724" stroke-width="4.5" fill="none" stroke-linejoin="round">
+          <path d="M-32,-236 l14,6 l-14,6"/><path d="M34,-236 l-14,6 l14,6"/>
+          <path d="M-14,-210 h28 v8 h-28 z" fill="#FFF6E6"/>
+          <path d="M-36,-252 L-12,-246"/><path d="M36,-252 L12,-246"/>
+        </g>
+        <ellipse cx="-34" cy="-212" rx="9" ry="6" fill="#F4A9A0"/><ellipse cx="36" cy="-212" rx="9" ry="6" fill="#F4A9A0"/>
+      </g>
+    </g>
+
+    <!-- CAPTAIN arms spread, stern-but-funny -->
+    <g id="captain">
+      <g stroke-linecap="round">
+        <line x1="-15" y1="-92" x2="-16" y2="-4" stroke="#24345A" stroke-width="18"/>
+        <line x1="15" y1="-92" x2="16" y2="-4" stroke="#24345A" stroke-width="18"/>
+        <path d="M-38,-198 L38,-198 L44,-86 L-44,-86 Z" fill="#3E5A8A"/>
+        <line x1="-34" y1="-186" x2="-128" y2="-192" stroke="#3E5A8A" stroke-width="16"/>
+        <line x1="34" y1="-186" x2="128" y2="-192" stroke="#3E5A8A" stroke-width="16"/>
+        <circle cx="-134" cy="-192" r="10" fill="#F0C9A4"/><circle cx="134" cy="-192" r="10" fill="#F0C9A4"/>
+        <circle cx="0" cy="-160" r="9" fill="#FFD75E"/>
+        <rect x="-52" y="-304" width="104" height="110" rx="34" fill="#F0C9A4"/>
+        <path d="M-56,-292 h112 v-14 q-56,-36 -112,0 z" fill="#2E4470"/>
+        <rect x="-64" y="-296" width="128" height="12" rx="6" fill="#1F2F52"/>
+        <circle cx="0" cy="-316" r="9" fill="#FFD75E"/>
+        <!-- stern face -->
+        <g stroke="#2B2724" stroke-linecap="round">
+          <line x1="-36" y1="-262" x2="-10" y2="-254" stroke-width="9"/>
+          <line x1="36" y1="-262" x2="10" y2="-254" stroke-width="9"/>
+          <line x1="-28" y1="-238" x2="-14" y2="-238" stroke-width="5"/>
+          <line x1="28" y1="-238" x2="14" y2="-238" stroke-width="5"/>
+          <path d="M-16,-210 q16,-10 32,0" stroke-width="4.5" fill="none"/>
+        </g>
+        <ellipse cx="0" cy="-226" rx="9" ry="7" fill="#E39A7A"/>
+        <ellipse cx="-36" cy="-220" rx="10" ry="6" fill="#F4A9A0"/><ellipse cx="36" cy="-220" rx="10" ry="6" fill="#F4A9A0"/>
+        <!-- anger mark -->
+        <g stroke="#C8584A" stroke-width="4" fill="none"><path d="M52,-292 q6,8 14,0"/><path d="M52,-280 q6,-8 14,0"/></g>
+      </g>
+    </g>
+
+    <!-- CIVILIAN injured (soot + bandage) -->
+    <g id="civ-injured">
+      <g stroke-linecap="round">
+        <line x1="-13" y1="-82" x2="-15" y2="-4" stroke="#6E5A4A" stroke-width="16"/>
+        <line x1="13" y1="-82" x2="15" y2="-4" stroke="#6E5A4A" stroke-width="16"/>
+        <path d="M-32,-176 L32,-176 L38,-78 L-38,-78 Z" fill="#8DBF8B"/>
+        <line x1="-30" y1="-168" x2="-14" y2="-212" stroke="#8DBF8B" stroke-width="13"/>
+        <line x1="30" y1="-168" x2="46" y2="-120" stroke="#8DBF8B" stroke-width="13"/>
+        <circle cx="-12" cy="-216" r="8" fill="#F3D2B0"/>
+        <rect x="-46" y="-272" width="92" height="98" rx="34" fill="#F3D2B0"/>
+        <path d="M-48,-246 q4,-40 48,-36 q44,-4 48,36 q-20,-14 -48,-10 q-28,-4 -48,10z" fill="#7A5236"/>
+        <circle cx="18" cy="-196" r="9" fill="#6B625C" opacity=".75"/><circle cx="-26" cy="-232" r="6" fill="#6B625C" opacity=".75"/>
+        <rect x="8" y="-262" width="34" height="11" rx="5" fill="#FFF6E6" stroke="#2B2724" stroke-width="2.5" transform="rotate(18 25 -256)"/>
+        <g stroke="#2B2724" stroke-width="4" fill="none">
+          <path d="M-26,-222 q8,-6 14,0"/><path d="M26,-222 q-8,-6 -14,0"/>
+          <path d="M-10,-196 q10,-8 20,0"/>
+        </g>
+        <ellipse cx="-28" cy="-202" rx="8" ry="5" fill="#F4A9A0"/>
+      </g>
+    </g>
+
+    <!-- keycap E -->
+    <symbol id="keyE" viewBox="0 0 84 88">
+      <rect x="4" y="10" width="76" height="74" rx="18" fill="#D8CBB8" stroke="#2B2724" stroke-width="4"/>
+      <rect x="4" y="4" width="76" height="70" rx="18" fill="#FFF6E6" stroke="#2B2724" stroke-width="4"/>
+      <text x="42" y="54" text-anchor="middle" font-family="Fredoka, sans-serif" font-weight="700" font-size="38" fill="#2B2724">E</text>
+    </symbol>
+
+    <!-- scissors cursor -->
+    <symbol id="scissors" viewBox="0 0 64 64">
+      <g stroke="#2B2724" stroke-width="4" stroke-linecap="round" fill="#FFF6E6">
+        <circle cx="16" cy="46" r="10"/><circle cx="38" cy="52" r="10"/>
+        <path d="M22,38 L54,8" fill="none"/><path d="M32,44 L58,18" fill="none" stroke="#2B2724"/>
+        <path d="M24,40 L50,6 L56,10 Z" fill="#9ED4EE"/>
+      </g>
+    </symbol>
+
+    <!-- smoke puff -->
+    <symbol id="puff" viewBox="0 0 60 50">
+      <g fill="#D9D0C7" stroke="#2B2724" stroke-width="3">
+        <circle cx="18" cy="30" r="13"/><circle cx="34" cy="20" r="15"/><circle cx="46" cy="32" r="11"/>
+      </g>
+    </symbol>
+  </defs>
+</svg>
+
+<!-- ================= BOARD HEADER ================= -->
+<div class="board-head">
+  <h1>PERSONA · UI / UX Spec Board
+    <small>主题 Director's Cut ·「古早萌系片场手账」风格 · 对应 docs/07_UI_UX_SPEC.md</small></h1>
+  <div class="meta">设计 Agent 视觉稿 · v0.1<span class="tag">[建议] 色值待校准</span><br>
+  英文文案均为 <b>SAMPLE COPY</b>，正式词句由 UE 编辑器配置<br>
+  角色/火焰为 UI 演示用占位造型，不代表最终美术</div>
+</div>
+
+<!-- ================= 01 PRE-TAKE ================= -->
+<div class="row-title"><span class="num">1</span>Pre-Take · 全屏剧本页（片场层）</div>
+<div class="row">
+  <div class="frame pretake">
+    <div class="tape t1"></div><div class="tape t2"></div>
+    <div class="sheet ink-box">
+      <div class="slate-line mono"><span>PERSONA</span><span>·</span><span>SCENE 01 — FIRE CALL</span><span>·</span><span class="take">TAKE 03</span></div>
+      <div class="stamp">DIRECTOR'S CUT</div>
+      <div class="rule"></div>
+      <div class="cue mono">FIREFIGHTER</div>
+      <div class="paren mono">(persona — read it, cut it, then call action)</div>
+      <p class="script mono">
+        <span class="blk fixed">I am a firefighter.</span>
+        <span class="blk fixed">I wear this helmet to pull people out of the smoke.</span>
+        <span class="blk cuttable">Every morning I count the station stairs: forty-two.</span>
+        <span class="blk hover">Last winter I ran into a fire against the Captain's order, and he made sure I would never forget it.<svg class="cursor-scissors"><use href="#scissors"/></svg></span>
+        <span class="blk cut">I once got lost in a supermarket for a whole hour.</span>
+      </p>
+      <div class="legend">
+        <span><i class="lg-fixed"></i>FIXED</span>
+        <span><i class="lg-cut"></i>CUTTABLE</span>
+        <span><i class="lg-done"></i>CUT</span>
+      </div>
+      <div class="sample">SAMPLE COPY · 示例文案</div>
+      <svg class="action-btn" width="290" height="170" viewBox="-10 -10 290 170">
+        <g filter="url(#wob)">
+          <rect x="0" y="44" width="270" height="112" rx="16" fill="#2B2724"/>
+          <g transform="rotate(-13 8 44)">
+            <rect x="0" y="12" width="270" height="32" rx="9" fill="#FFF6E6" stroke="#2B2724" stroke-width="4"/>
+            <g fill="#2B2724"><polygon points="30,14 56,14 40,42 14,42"/><polygon points="86,14 112,14 96,42 70,42"/><polygon points="142,14 168,14 152,42 126,42"/><polygon points="198,14 224,14 208,42 182,42"/><polygon points="254,14 268,14 264,30 238,42 252,22"/></g>
+          </g>
+          <circle cx="10" cy="44" r="8" fill="#FFD75E" stroke="#2B2724" stroke-width="3"/>
+        </g>
+        <text x="135" y="118" text-anchor="middle" font-family="Fredoka, sans-serif" font-weight="700" font-size="48" fill="#FFF6E6" letter-spacing="3">ACTION!</text>
+      </svg>
+    </div>
+  </div>
+  <div class="notes">
+    <h3>版式与状态</h3>
+    <ul>
+      <li>全屏奶油色剧本纸，压在暖棕桌面上；胶带角为纯色</li>
+      <li>页眉场记：<b>PERSONA · SCENE · TAKE 03</b>，重拍时 Take 编号 +1 <i>[建议]</i></li>
+      <li>正文为剧本等宽字体的连贯独白</li>
+    </ul>
+    <h3>文字块三态</h3>
+    <ul>
+      <li><b>固定</b>：普通墨字，无悬停</li>
+      <li><b>可删</b>：荧光笔底色 + 虚线；悬停时变腮红粉、光标变剪刀</li>
+      <li><b>已删</b>：粗马克笔线划掉，原文保留；本轮内不能恢复</li>
+    </ul>
+    <h3>开拍</h3>
+    <ul><li>场记板「ACTION!」：点击后场记板合拍 → 剧本纸收起 → 进入 Active Take，编辑锁定</li></ul>
+    <div class="ref">参照：07_UI_UX_SPEC §4 · AGENTS.md 红线 12</div>
+  </div>
+</div>
+
+<!-- ================= 02 ACTIVE — BLOCKED AT DOOR ================= -->
+<div class="row-title"><span class="num">2</span>Active Take · 门口受阻（舞台层）</div>
+<div class="row">
+  <div class="frame stage">
+    <svg class="room" viewBox="0 0 1600 900"><use href="#room"/>
+      <use href="#fire" transform="translate(1020,600) scale(.9)"/>
+      <use href="#fire" transform="translate(1330,760) scale(1.25)"/>
+      <use href="#fire" transform="translate(760,720) scale(.75)"/>
+      <use href="#captain" transform="translate(330,705) scale(.62)"/>
+      <use href="#ff-worried" transform="translate(560,815) scale(.92)"/>
+    </svg>
+    <div class="take-tag ink-box"><span class="mono">TAKE 03</span><span class="key">R</span><span>Retake</span></div>
+    <div class="bubble hand ink-free" style="left:600px;top:250px">I must obey the Captain's orders…<span class="sub">last time I didn't, it never ended well.</span>
+      <svg class="dots" viewBox="0 0 70 60"><g fill="#FFF6E6" stroke="#F2A46F" stroke-width="4"><circle cx="14" cy="10" r="10"/><circle cx="34" cy="34" r="7"/><circle cx="50" cy="52" r="5"/></g></svg>
+    </div>
+    <div class="prompt" style="left:298px;top:300px"><svg width="72" height="76"><use href="#keyE"/></svg><span class="label ink-box">ENTER</span></div>
+    <div class="callout" style="left:600px;top:200px">思想泡泡 · 圆点尾巴 = 角色在想，不是在说</div>
+    <div class="callout" style="left:298px;top:258px">[E] 键帽提示</div>
+    <div class="callout" style="left:1210px;top:96px">唯一常驻：角落 Take 场记牌</div>
+  </div>
+  <div class="notes">
+    <h3>舞台层原则</h3>
+    <ul>
+      <li>开拍后去掉所有大块面板，<b>只常驻右上角 Take 场记牌</b></li>
+      <li>单固定室内机位；透过左墙敞开的门，同一画面看到门外撑手拦门的队长和蓝色安全区</li>
+    </ul>
+    <h3>思想泡泡</h3>
+    <ul>
+      <li>奶油底 + 桃橙粗描边 + 大圆角；<b>圆点尾巴</b></li>
+      <li>文案结构：表层抗拒想法 + 隐晦的过去经历线索（第二行字号小一些）</li>
+      <li>锚定头顶 3D 坐标、屏幕空间显示；弹出时回弹，数秒后缩小消失</li>
+    </ul>
+    <h3>[E] 提示</h3>
+    <ul><li>圆胖键帽 + 动词标签，出现在可交互目标上方，轻微弹跳</li></ul>
+    <div class="ref">参照：07 §5.1–5.2 · 01 §3 · 02 §2.3 · 角色与火焰为占位</div>
+  </div>
+</div>
+
+<!-- ================= 03 ACTIVE — EXTINGUISH + STAR POP ================= -->
+<div class="row-title"><span class="num">3</span>Active Take · 按住 E 灭火 + 星容器闪现</div>
+<div class="row">
+  <div class="frame stage">
+    <svg class="room" viewBox="0 0 1600 900"><use href="#room"/>
+      <use href="#civ-injured" transform="translate(1110,640) scale(.62)"/>
+      <use href="#fire" transform="translate(1020,600) scale(.6)"/>
+      <use href="#fire" transform="translate(1340,780) scale(1.35)"/>
+      <polygon points="905,640 1215,690 1240,600" fill="#9ED4EE" stroke="#2B2724" stroke-width="4" stroke-linejoin="round" opacity=".95"/>
+      <g fill="#FFF6E6"><circle cx="1050" cy="640" r="6"/><circle cx="1120" cy="660" r="5"/><circle cx="1180" cy="638" r="7"/><circle cx="1210" cy="668" r="4"/></g>
+      <use href="#ff-spray" transform="translate(830,840) scale(1.0)"/>
+    </svg>
+    <div class="take-tag ink-box"><span class="mono">TAKE 03</span><span class="key">R</span><span>Retake</span></div>
+
+    <div class="star-pop ink-box">
+      <svg width="74" height="74"><use href="#star" fill="#FFD75E" stroke="#2B2724"/></svg>
+      <svg width="74" height="74"><use href="#star" fill="#FFF6E6" stroke="#2B2724"/></svg>
+      <div style="position:relative;width:74px;height:74px">
+        <svg width="74" height="74" style="position:absolute;inset:0;transform:rotate(14deg)"><use href="#star" fill="#6B625C" stroke="#2B2724"/></svg>
+        <svg width="74" height="74" viewBox="0 0 100 100" style="position:absolute;inset:0;transform:rotate(14deg)"><polyline points="52,14 44,40 58,52 46,78" fill="none" stroke="#FFF6E6" stroke-width="5" stroke-linejoin="round"/></svg>
+        <svg width="50" height="42" style="position:absolute;left:34px;top:-30px"><use href="#puff"/></svg>
+      </div>
+    </div>
+    <div class="callout" style="left:1010px;top:56px;max-width:300px">容器扣减 3→2：最右的空心星烧焦、裂开、冒烟，然后消失</div>
+
+    <div class="prompt" style="left:868px;top:390px">
+      <div style="position:relative;width:120px;height:120px">
+        <svg width="120" height="120" viewBox="0 0 120 120" style="position:absolute;inset:0">
+          <circle cx="60" cy="60" r="50" fill="none" stroke="#2B2724" stroke-width="14"/>
+          <circle cx="60" cy="60" r="50" fill="none" stroke="#FFF6E6" stroke-width="8"/>
+          <circle cx="60" cy="60" r="50" fill="none" stroke="#9ED4EE" stroke-width="8" stroke-dasharray="188 314" stroke-linecap="round" transform="rotate(-90 60 60)"/>
+        </svg>
+        <svg width="72" height="76" style="position:absolute;left:24px;top:22px"><use href="#keyE"/></svg>
+      </div>
+      <span class="label ink-box">HOLD · EXTINGUISH</span>
+    </div>
+    <div class="callout" style="left:1004px;top:470px">读条为水蓝色环形 = 喷水</div>
+  </div>
+  <div class="notes">
+    <h3>按住 E 灭火读条</h3>
+    <ul>
+      <li>沿键帽外圈的<b>水蓝环形进度</b>（语义：在喷水）</li>
+      <li>松手后读条回退还是清空 <i>[待决定·规则侧]</i></li>
+    </ul>
+    <h3>非常驻星容器闪现</h3>
+    <ul>
+      <li>屏幕顶部居中，事件触发时弹出，<b>约 2 秒后淡出</b></li>
+      <li>空心：奶油底 + 墨线；点亮：奶油黄 + 弹跳闪点</li>
+      <li>扣减：最右空心星 → 焦黑 → 裂开 → 卡通烟 → 消失（搞笑而非恐怖）</li>
+      <li>UI 只订阅 EarnedStars / MaxStarContainers 变化，不自己计算</li>
+    </ul>
+    <div class="ref">参照：07 §5.2–5.3 · 01 §7 · 03 §4.4</div>
+  </div>
+</div>
+
+<!-- ================= 04 RESULT ================= -->
+<div class="row-title"><span class="num">4</span>Take Result · 结算场记板（片场层）</div>
+<div class="row">
+  <div class="frame stage">
+    <svg class="room" viewBox="0 0 1600 900"><use href="#room"/>
+      <use href="#ff-worried" transform="translate(560,815) scale(.92)"/>
+    </svg>
+    <div class="dim"></div>
+    <svg class="result-clapper" width="420" height="230" viewBox="-10 -10 420 230">
+      <g filter="url(#wob)">
+        <rect x="0" y="56" width="400" height="160" rx="20" fill="#FFF6E6" stroke="#2B2724" stroke-width="5"/>
+        <rect x="0" y="22" width="400" height="36" rx="10" fill="#FFF6E6" stroke="#2B2724" stroke-width="5"/>
+        <g fill="#2B2724"><polygon points="40,24 74,24 58,56 24,56"/><polygon points="112,24 146,24 130,56 96,56"/><polygon points="184,24 218,24 202,56 168,56"/><polygon points="256,24 290,24 274,56 240,56"/><polygon points="328,24 362,24 346,56 312,56"/></g>
+      </g>
+      <text x="200" y="172" text-anchor="middle" font-family="Fredoka, sans-serif" font-weight="700" font-size="84" fill="#2B2724" letter-spacing="6">CUT!</text>
+    </svg>
+    <div class="result-card ink-box">
+      <div class="result-stars">
+        <svg width="104" height="104"><use href="#star" fill="#FFD75E" stroke="#FFF6E6"/></svg>
+        <svg width="104" height="104"><use href="#star" fill="#FFD75E" stroke="#FFF6E6"/></svg>
+        <div style="position:relative;width:104px;height:104px;opacity:.55">
+          <svg width="104" height="104" style="position:absolute;inset:0;transform:rotate(12deg)"><use href="#star" fill="#6B625C" stroke="#FFF6E6"/></svg>
+          <svg width="104" height="104" viewBox="0 0 100 100" style="position:absolute;inset:0;transform:rotate(12deg)"><polyline points="52,14 44,40 58,52 46,78" fill="none" stroke="#2B2724" stroke-width="5"/></svg>
+        </div>
+      </div>
+      <div class="result-lines mono">
+        FIRE ············· <b>OUT</b><br>
+        CIVILIAN ········· <b>RESCUED</b> · injured<br>
+        TAKE 03 ·········· <b>2 / 2</b> stars
+      </div>
+    </div>
+    <div class="retake ink-box"><span class="key">R</span>RETAKE</div>
+  </div>
+  <div class="notes">
+    <h3>结算复盘</h3>
+    <ul>
+      <li>场记板「CUT!」落下合拍</li>
+      <li>黑板卡展示<b>点亮星数 + 剩余容器</b></li>
+      <li>因受困者受伤或遇难失去的容器，以<b>焦黑碎裂残影</b>留在原位，让玩家一眼看到差在哪</li>
+      <li>结果行只陈述客观事实，不评判玩家</li>
+      <li>按钮：[R] RETAKE → 回到 Pre-Take，Take 编号 +1</li>
+    </ul>
+    <div class="ref">参照：07 §6 · 01 §7.2</div>
+  </div>
+</div>
+
+<!-- ================= 05 COMPONENT SHEET ================= -->
+<div class="row-title"><span class="num">5</span>Component Sheet · 组件与色板</div>
+<div class="row">
+  <div class="frame sheet-comp">
+    <div class="cell">
+      <h4>Palette <em>[建议] 待校准</em></h4>
+      <div class="swatches">
+        <div class="sw" style="background:#FFF6E6"><span>Paper<br>#FFF6E6</span></div>
+        <div class="sw" style="background:#2B2724"><span>Ink<br>#2B2724</span></div>
+        <div class="sw" style="background:#F2A46F"><span>Peach<br>#F2A46F</span></div>
+        <div class="sw" style="background:#F4A9A0"><span>Blush<br>#F4A9A0</span></div>
+        <div class="sw" style="background:#9ED4EE"><span>Sky<br>#9ED4EE</span></div>
+        <div class="sw" style="background:#FFD75E"><span>Butter<br>#FFD75E</span></div>
+        <div class="sw" style="background:#6B625C"><span>Char<br>#6B625C</span></div>
+        <div class="sw" style="background:#FFE9A8"><span>Highlight<br>#FFE9A8</span></div>
+      </div>
+    </div>
+    <div class="cell">
+      <h4>Persona Block States <em>WBP_PersonaBlock</em></h4>
+      <div class="statebox mono">
+        <div><div class="lbl">FIXED</div><span class="blk fixed">I am a firefighter.</span></div>
+        <div><div class="lbl">CUTTABLE · idle</div><span class="blk cuttable">I count the stairs: forty-two.</span></div>
+        <div style="position:relative"><div class="lbl">CUTTABLE · hover (scissors)</div><span class="blk hover">I count the stairs: forty-two.</span><svg width="40" height="40" style="position:absolute;left:330px;top:22px"><use href="#scissors"/></svg></div>
+        <div><div class="lbl">CUT</div><span class="blk cut">I count the stairs: forty-two.</span></div>
+      </div>
+    </div>
+    <div class="cell">
+      <h4>Star Container <em>T_UI_Star_*</em></h4>
+      <div class="hstack">
+        <figure><svg width="80" height="80"><use href="#star" fill="#FFF6E6" stroke="#2B2724"/></svg>Empty</figure>
+        <figure><svg width="80" height="80"><use href="#star" fill="#FFD75E" stroke="#2B2724"/></svg>Filled</figure>
+        <figure><div style="position:relative;width:80px;height:80px"><svg width="80" height="80" style="position:absolute;inset:0;transform:rotate(14deg)"><use href="#star" fill="#6B625C" stroke="#2B2724"/></svg><svg width="80" height="80" viewBox="0 0 100 100" style="position:absolute;inset:0;transform:rotate(14deg)"><polyline points="52,14 44,40 58,52 46,78" fill="none" stroke="#FFF6E6" stroke-width="5"/></svg><svg width="42" height="36" style="position:absolute;left:40px;top:-22px"><use href="#puff"/></svg></div>Burnt</figure>
+      </div>
+      <div style="margin-top:14px;font-size:15px;line-height:1.5">扣减顺序：Empty → Char → Crack + Puff → 消失（约 0.5 秒）</div>
+    </div>
+    <div class="cell">
+      <h4>Interact Prompt <em>WBP_InteractPrompt</em></h4>
+      <div class="hstack">
+        <figure><svg width="72" height="76"><use href="#keyE"/></svg>Tap</figure>
+        <figure><div style="position:relative;width:100px;height:100px"><svg width="100" height="100" viewBox="0 0 120 120" style="position:absolute;inset:0"><circle cx="60" cy="60" r="50" fill="none" stroke="#2B2724" stroke-width="14"/><circle cx="60" cy="60" r="50" fill="none" stroke="#FFF6E6" stroke-width="8"/><circle cx="60" cy="60" r="50" fill="none" stroke="#9ED4EE" stroke-width="8" stroke-dasharray="94 314" stroke-linecap="round" transform="rotate(-90 60 60)"/></svg><svg width="60" height="64" viewBox="0 0 84 88" style="position:absolute;left:20px;top:18px"><use href="#keyE"/></svg></div>Hold 30%</figure>
+        <figure><div style="position:relative;width:100px;height:100px"><svg width="100" height="100" viewBox="0 0 120 120" style="position:absolute;inset:0"><circle cx="60" cy="60" r="50" fill="none" stroke="#2B2724" stroke-width="14"/><circle cx="60" cy="60" r="50" fill="none" stroke="#9ED4EE" stroke-width="8"/></svg><svg width="60" height="64" viewBox="0 0 84 88" style="position:absolute;left:20px;top:18px"><use href="#keyE"/></svg></div>Done</figure>
+      </div>
+    </div>
+    <div class="cell">
+      <h4>Thought Bubble <em>WBP_ThoughtBubble</em></h4>
+      <div class="mini-bubble hand">I must obey the Captain…</div>
+      <svg width="70" height="56" viewBox="0 0 70 60" style="display:block;margin-left:24px"><g fill="#FFF6E6" stroke="#F2A46F" stroke-width="4"><circle cx="14" cy="10" r="10"/><circle cx="34" cy="34" r="7"/><circle cx="50" cy="52" r="5"/></g></svg>
+      <div style="font-size:15px;line-height:1.5">圆点尾巴＝想法；说话气泡（若将来需要）用三角尖尾，二者区分</div>
+    </div>
+    <div class="cell">
+      <h4>Tags · Cursor · Type <em>字体 [待决定·须 OFL]</em></h4>
+      <div class="hstack" style="margin-bottom:16px">
+        <span class="mini-tag"><span class="mono">TAKE 03</span><span class="key">R</span>Retake</span>
+        <svg width="46" height="46"><use href="#scissors"/></svg>
+      </div>
+      <div class="typo">
+        <div class="mono" style="font-size:22px">Screenplay Mono — script body</div>
+        <div style="font-size:22px;font-weight:600">Rounded Sans — buttons &amp; prompts</div>
+        <div class="hand" style="font-size:26px">Hand-written — thought bubbles</div>
+      </div>
+    </div>
+  </div>
+  <div class="notes">
+    <h3>组件规则</h3>
+    <ul>
+      <li>所有组件：<b>纯色填充 + 暖墨黑手绘描边 + 大圆角</b></li>
+      <li>禁止：渐变、毛玻璃、写实投影、霓虹发光、赛璐璐硬阴影</li>
+      <li>UI 中可以出现英文（UI 不做镜像翻转）；世界内的纸片仍然禁止字母和数字</li>
+      <li>动效：短促回弹，单段约 0.3–0.5 秒；时长开放给编辑器配置</li>
+    </ul>
+    <h3>字体</h3>
+    <ul><li>示意字体：Courier Prime / Fredoka / Patrick Hand（均为 OFL 授权）；最终选型 <i>[待决定]</i></li></ul>
+    <div class="ref">参照：07 §2 · §8 组件清单</div>
+  </div>
+</div>
+
+</body>
+</html>
