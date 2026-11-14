@@ -42,7 +42,7 @@ Presentation Adapters
     +-- Camera / VFX / Audio (if present)
 ```
 
-**[技术必需]** UI、3D 模型、镜头和特效不能成为 Persona 规则、交互是否允许的权威数据源。
+**[技术必需]** UI、Sprite、镜头和特效不能成为 Persona 规则、交互是否允许的权威数据源。
 
 ## 3. ECS 职责（逻辑模型，不是已选引擎 API）
 
@@ -60,7 +60,7 @@ Presentation Adapters
 - Interaction 数据：可执行动作与规则依赖。
 - NPC script 数据：预设行动的状态与进度。
 - World transform：世界坐标与碰撞标识。
-- Presentation binding：逻辑对象与 3D 模型 / 思想泡泡的关联。
+- Presentation binding：逻辑对象与纸片 / 思想泡泡的关联。
 - Outcome 数据：火灾、救援等目标的实际完成情况。
 
 > 这些是**职责分类**，不表示必须创建同名 UE Component，也不自动增加数值系统。
@@ -71,7 +71,7 @@ Presentation Adapters
 - Interaction Resolver：依据当前角色状态判断是否允许交互。
 - NPC Script Runner：按配置推进 NPC 原定行动。
 - Outcome Evaluator：根据火势四阶段演化与救援/灭火事实维护动态星容器及最终星级。
-- Presentation Update：读取状态并显示 3D 模型、泡泡、UI。
+- Presentation Update：读取状态并显示纸片、泡泡、UI。
 
 这些英文名称是**占位职责名**，不是必须使用的 UE 类名。
 
@@ -146,9 +146,9 @@ Scene actual state     -> 动态星容器即时闪现反馈 & 终局结算
 
 ## 6. 表现与逻辑解耦红线
 
-1. 删掉或替换 3D 模型 **不能**删除 NPC、角色或交互对象的逻辑实体。
+1. 删掉 Sprite **不能**删除 NPC、角色或交互对象的逻辑实体。
 2. 修改 UI 文字 **不能**作为 Persona 变化的唯一数据操作；必须先通过编辑规则验证。
-3. 3D 模型的原点、材质和朝向 **不能**决定交互权限。
+3. 视觉纸片的 Pivot、材质和朝向 **不能**决定交互权限。
 4. 相机如何移动 **不能**改变世界对象的真实坐标或其 Persona 状态。
 5. 交互失败时，思想泡泡是**规则结果的反馈**，不是由泡泡控件决定是否允许交互。
 6. 角色被删除的记忆影响的是当前角色；NPC 过去和记忆不得自动跟着删除。
