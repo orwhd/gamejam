@@ -2,16 +2,17 @@
 
 > 本文定义**职责与依赖方向**；不替用户选择 Blueprint、C++、Mass Entity 或第三方 ECS 的具体实现。
 
-## 1. 未决定的技术选型
+## 1. 产品与技术级选型状态
 
 | 决策 | 状态 |
 |---|---|
-| UE 具体版本 | **TBD** |
-| 以 Blueprint 还是 C++ 为主 | **TBD** |
-| ECS：UE Actor/Component、Mass Entity 或自定义方式 | **TBD** |
+| UE 具体版本 | **[已确认]** UE 5.8（开发机环境 5.8.4） |
+| 目标交付平台与跨平台约束 | **[已确认]** Windows 打包提交，macOS 仅作开发机；**[技术必需]** 禁止依赖 macOS 专有路径或仅 Metal 可用的特性 |
+| C++ 与编辑器分工 | **[已确认]** C++ 负责底层权威规则与状态机；关卡配置、文字块数据与 UI 表现开放给编辑器（Details / DataAsset / UMG）调整 |
+| ECS：UE Actor/Component、Mass Entity 或自定义方式 | **TBD**（由编程 Agent 在 C++ 权威框架下按原型规模选定，不预设 Mass Entity） |
 | NPC 剧本：Sequencer / 状态机 / 定时事件等 | **TBD** |
-| Persona 语义解释：映射表、规则引擎、LLM 等 | **TBD** |
-| 持久化 / 存档 / 关卡重放方案 | **TBD** |
+| Persona 语义解释机制 | **[已确认]** 确定性规则 / 多标签映射（**不接入 LLM**；单块可赋予 `0..N` 个标签，删块同步移除） |
+| 持久化 / 存档 / 关卡重放方案 | **[已确认]** 单局 / 按关重开，无跨退出存档；仅 `Pre-Take` 可删块，单轮内不可单块撤销，仅靠 `Restart Take` 整轮重置 |
 
 **规则**：先界定 Entity / Component / System 的逻辑边界，再选 UE 具体承载技术。不得把「需要 ECS 文档」理解为用户已经选定 Mass Entity。
 
@@ -69,64 +70,77 @@ Presentation Adapters
 - Persona State Updater：应用被删除的经历对当前角色记忆的变化。
 - Interaction Resolver：依据当前角色状态判断是否允许交互。
 - NPC Script Runner：按配置推进 NPC 原定行动。
-- Outcome Evaluator：根据场景结果产生评价信息（细则未定）。
+- Outcome Evaluator：根据火势四阶段演化与救援/灭火事实维护动态星容器及最终星级。
 - Presentation Update：读取状态并显示纸片、泡泡、UI。
 
 这些英文名称是**占位职责名**，不是必须使用的 UE 类名。
 
 ## 4. 最小状态模型
 
-### 4.1 Persona 块状态
+### 4.1 Take 阶段与 Persona 块状态
 
+```text
+[Pre-Take 开拍前准备] --(Start Take 开拍)--> [Active Take 正式演出] --(结算条件满足)--> [Take Result 结算]
+         ^                                            |                                      |
+         +------------(Restart Take 重拍重置)----------+--------------------------------------+
 ```
-PRESENT --[合法删除]--> DELETED
+
+```text
+PRESENT --[仅在 Pre-Take 合法删除]--> DELETED
+DELETED --[仅通过 Restart Take 整轮重置]--> PRESENT
 ```
 
-- 仅当文字块允许删除时才可触发。
-- 文字块是否允许恢复，以及 `DELETED -> PRESENT` 何时发生：**TBD**。
-- 重排块的完整状态机：**TBD**。
+- **[已确认]** 仅在 `Pre-Take` 阶段且文字块 `can_delete == true` 时允许触发 `PRESENT -> DELETED`；进入 `Active Take` 后锁定编辑权限。
+- **[已确认]** 单轮演出内不支持单块撤销恢复；`DELETED -> PRESENT` 仅在触发 `Restart Take`（整轮重置 Persona 与场景状态）时发生。
+- **[已确认]** 灰盒原型阶段不启用重排状态机（仅保留 `can_reorder` 数据字段扩展位，当前关卡全为 `false`）。
 
-### 4.2 交互判定（非自动改变角色意愿）
+### 4.2 交互判定（确定性标签检查）
 
-```
+```text
 InteractionRequest
-    -> Evaluate(current Persona / scene state)
+    -> Evaluate(active Persona tags + scene state)
        -> ALLOWED -> ExecuteRequestedAction
-       -> DENIED  -> ReturnReason -> ThoughtBubble
+       -> DENIED  -> ReturnReason -> ThoughtBubble (表层抗拒想法 + 隐晦过去经历线索)
 ```
 
-- 玩家直接操控动作，Persona 决定交互能否执行。
-- 具体怎样从删减文字推出 `ALLOWED/DENIED`：**TBD**。
-- ThoughtBubble 是否提供完整因果解释：**TBD**。
+- **[已确认]** 每个处于 `PRESENT` 状态的文字块向角色提供 `0..N` 个显式状态标签（可含限制类标签与能力/认知前提类标签）；删除文字块即移除其提供的全部标签，不自动反向赋权。
+- **[已确认]** 交互判定同时检查场景客观条件、所需前置标签是否具备、以及是否存在阻止该交互的心理限制标签。
+- **[已确认]** 因心理限制被拒绝时，`ThoughtBubble` 输出「表层抗拒态度 + 隐晦指向过去经历的线索」。
 
 ### 4.3 NPC 与事件结果
 
+```text
+Preauthored NPC Script -> NPC intended actions (如队长无台词撑手拦在入口前)
+Fire Stage Progression -> Active -> CivilianInjured (容器 3->2) -> CivilianDead (容器 2->1) -> RoomEngulfed (强制收工)
+Player interventions   -> 拾取/开启灭火工具、扑灭火灾、护送受困者至安全区
+Scene actual state     -> 动态星容器即时闪现反馈 & 终局结算
 ```
-Preauthored NPC Script -> NPC intended actions
-Player interventions  -> Scene actual state
-Scene actual state    -> Outcome evaluation
-```
 
-- NPC 的计划与已发生的场景结果是两个概念。
-- NPC 遭遇被玩家改变的场景结果时如何响应：**TBD**。
-- NPC 是否必须精确按时间轴执行：**TBD**。
+- **[已确认]** NPC 的预设行为与实际场景结果分离；消防员关卡中队长全程无台词、双手撑开拦截在门前，不随主角删除记忆而改变站位或态度。
+- **[已确认]** 主角不设血条死亡；已护送至安全区的救援星数在火势铺满全屋收工时予以保留。
 
-### 4.4 关卡评价
+### 4.4 动态星容器与关卡结算模型
 
-- 已提出 0–3 星目标（详见 `01_GDD_CORE.md`）。
-- 评分触发时机、优先级、三星阈值与所有实际逻辑分支：**TBD**。
-- 不要预先编出一套能够让 3 星成立的解谜条件。
+- **[已确认]** 权威状态维护 `EarnedStars`（初始 `0`）与 `MaxStarContainers`（初始 `3`）：
+  - 扑灭火灾：`EarnedStars += 1`，触发即时星容器闪现事件。
+  - 受困者护送至安全区：若未受伤 `EarnedStars += 2`，若已受伤 `EarnedStars += 1`，触发即时星容器闪现事件。
+  - 火势波及未获救受困者使其受伤：`MaxStarContainers` 由 `3` 减至 `2`，触发即时星容器扣减闪现事件。
+  - 火势继续波及未获救受困者致其身亡：`MaxStarContainers` 由 `2` 减至 `1`，触发即时星容器扣减闪现事件。
+- **[已确认]** 单轮结束判定：`EarnedStars == MaxStarContainers`（达成当前剩余容器满星）**或** `火势阶段 == RoomEngulfed（铺满整个房间）`。
+- **[技术必需]** 星容器 UI 仅订阅上述状态变化事件做短暂闪现展示，不得由 UI 自身维护或裁决星数。
 
 ## 5. 事件 / 接口合同（仅定义职责，不锁定名称）
 
 | 意图 / 事件 | 需要传递的最小信息 | 具体 API |
 |---|---|---|
-| 请求删除块 | 主角标识、Block ID | TBD |
+| 请求删除块（仅 `Pre-Take`） | 主角标识、Block ID | TBD |
 | 块状态变化 | 主角标识、Block ID、状态 | TBD |
-| 请求执行交互 | 主角、目标、动作标识 | TBD |
-| 交互被拒绝 | 请求标识、原因 / 提示文本标识 | TBD |
-| NPC 推进预设动作 | NPC 标识、脚本步骤标识 | TBD |
-| 实际场景结果变化 | 场景 / 目标状态 | TBD |
+| 开始演出 / 重拍重置 | 关卡/Take 标识 | TBD |
+| 请求执行交互 | 主角、目标、动作标识（进门/取工具/灭火/护送） | TBD |
+| 交互被拒绝 | 请求标识、原因 / 思想泡泡文本标识 | TBD |
+| 火势阶段推进 | 当前火势阶段、受困者健康状态变化 | TBD |
+| 星容器即时闪现通知 | 当前已得星数 `EarnedStars`、当前容器上限 `MaxStarContainers`、变化类型 | TBD |
+| 单轮结束结算 | 结束原因（满容器 / 火满全屋）、最终星数与容器上限 | TBD |
 
 如项目已有事件系统，优先检查后适配；不得据此表凭空建立复杂 Event Bus。
 

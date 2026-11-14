@@ -18,19 +18,21 @@ UE 中可以考虑 JSON、`UDataAsset`、`UPrimaryDataAsset`、`UDataTable`、`U
 - **[已确认]** Persona 能影响角色的交互。
 - **[已确认]** NPC 的既定剧本与实际世界结果需要分开表示。
 - **[已确认]** 世界对象有实际 3D 位置，纸片只是可见表现。
-- **[待决定]** 完整 Persona 的正式文本、各种效果 ID、效果组合、权重、评分阈值、镜头数值。
+- **[编辑器待填值]** 各文字块与泡泡的具体英文词句、火势阶段具体秒数、移动/交互距离数值、摄像机精确厘米坐标与偏航角均保持 `null`，交由编辑器配置与灰盒实测校准。
 
-## 3. ProjectConfig（占位）
+## 3. ProjectConfig（已确认项与待定项）
 
 ```json
 {
-  "game_title": null,
+  "game_title": "Persona",
   "game_jam_theme": "Director's Cut",
   "engine_name": "Unreal Engine",
-  "engine_version": null,
-  "target_platform": null,
-  "input_scheme": null,
-  "gameplay_implementation": null,
+  "engine_version": "5.8",
+  "target_platform": "Windows (developed on macOS)",
+  "input_scheme": "Keyboard (movement/interaction) + Mouse (Persona panel)",
+  "gameplay_implementation": "C++ authoritative rules & state machine + Editor-exposed config / DataAsset / UMG",
+  "persona_evaluation_mode": "Deterministic rule/tag mapping (no LLM)",
+  "persistence_scope": "Per-take / per-level restart (no cross-session save)",
   "data_backend": null
 }
 ```
@@ -46,23 +48,24 @@ UE 中可以考虑 JSON、`UDataAsset`、`UPrimaryDataAsset`、`UDataTable`、`U
       "block_id": null,
       "text": null,
       "can_delete": null,
-      "can_reorder": null,
+      "can_reorder": false,
       "is_present": null,
-      "effect_ref": null
+      "granted_tags": []
     }
   ],
-  "edit_timing_rule": null,
-  "undo_rule": null,
-  "reorder_semantics": null
+  "edit_timing_rule": "PreTakeOnly",
+  "undo_rule": "RestartTakeFullResetOnly",
+  "reorder_enabled_in_prototype": false
 }
 ```
 
 字段语义：
 - `block_id`：同一 Persona 内标识一个完整文字块。
 - `text`：该块显示的文本。
-- `can_delete` / `can_reorder`：可操作性开关，**实际值由设计者填写**。
-- `is_present`：当前块是否仍存在；是否持久化及如何重置尚未确定。
-- `effect_ref`：连接到角色行为 / 记忆效果的标识；**解释机制尚未决定**。
+- `can_delete`：可删除开关，**实际值由设计者按块填写**。
+- `can_reorder`：重排扩展字段；**[已确认]** 灰盒原型阶段不启用重排玩法，默认填 `false`。
+- `is_present`：当前块在本轮 Take 中是否仍存在；仅在 `Pre-Take` 阶段可置为 `false`，触发 `Restart Take` 时重置回初始值。
+- `granted_tags`：该块激活（`is_present == true`）时赋予角色的 `0..N` 个确定性状态标签列表（可含心理限制标签或正面认知/能力标签；删块即失去这些标签，绝不自动产生反向能力标签）。
 
 > 不允许默认把删除 `not fireproof` 解释成 `fireproof = true`。
 
@@ -75,14 +78,15 @@ UE 中可以考虑 JSON、`UDataAsset`、`UPrimaryDataAsset`、`UDataTable`、`U
   "target_id": null,
   "action_id": null,
   "required_context": null,
-  "persona_gate_ref": null,
+  "required_persona_tags": [],
+  "blocking_persona_tags": [],
   "denial_thought_id": null,
   "result_event_id": null
 }
 ```
 
-- `persona_gate_ref` 只代表「这项交互可能受 Persona 约束」，**不规定布尔、数值、推理或 AI 实现方法**。
-- `denial_thought_id` 指向思想泡泡文案；是否提供隐藏的背景原因：**TBD**。
+- `required_persona_tags` / `blocking_persona_tags`：确定性标签门控——要求角色具备某些认知/能力标签，且不携带阻止该行为的心理限制标签。
+- `denial_thought_id`：指向思想泡泡文案；**[已确认]** 文案规范为「表层抗拒想法 + 隐晦指向过去经历的线索」。
 - 碰撞检测、交互距离、提示按钮：**TBD**。
 
 ## 6. NPCScriptSchema（候选字段）
@@ -91,6 +95,8 @@ UE 中可以考虑 JSON、`UDataAsset`、`UPrimaryDataAsset`、`UDataTable`、`U
 {
   "npc_id": null,
   "script_id": null,
+  "has_dialogue": false,
+  "posture_or_blocking_behavior": "BlockEntranceArmsSpread",
   "steps": [
     {
       "step_id": null,
@@ -98,14 +104,12 @@ UE 中可以考虑 JSON、`UDataAsset`、`UPrimaryDataAsset`、`UDataTable`、`U
       "action": null,
       "parameters": null
     }
-  ],
-  "unexpected_world_state_policy": null
+  ]
 }
 ```
 
-- `steps` 表示 **NPC 预设的行动计划**。
+- 消防员关卡中，队长 `has_dialogue = false`（全程无台词），行为表现为双手撑开拦截在入口前。
 - 不要将 `steps` 直接当作世界结局记录。
-- 时间触发 / 剧情触发的选择，以及遇阻处理：**TBD**。
 
 ## 7. Scene / OutcomeSchema（候选字段）
 
@@ -113,17 +117,23 @@ UE 中可以考虑 JSON、`UDataAsset`、`UPrimaryDataAsset`、`UDataTable`、`U
 {
   "scene_id": null,
   "controlled_character_id": null,
-  "fire_extinguished": null,
-  "person_rescued": null,
-  "fire_escalation_definition": null,
-  "result_evaluation_trigger": null,
-  "result_rating": null
+  "has_extinguish_tool": false,
+  "fire_stage": "Active | InjuredCivilian | KilledCivilian | RoomEngulfed | Extinguished",
+  "civilian_state": "Uninjured | Injured | Dead | RescuedUninjured | RescuedInjured",
+  "fire_stage_durations_sec": {
+    "to_injure_civilian": null,
+    "to_kill_civilian": null,
+    "to_engulf_room": null
+  },
+  "max_star_containers": 3,
+  "earned_stars": 0,
+  "take_end_condition": "EarnedStarsEqualsMaxContainers_Or_RoomEngulfed"
 }
 ```
 
-- `fire_extinguished` 和 `person_rescued` 是目前关卡目标中已有的概念。
-- `fire_escalation_definition` 与 3 星精确阈值尚未确定。
-- 不能把 `null` 当 `false`，也不能把 `null` 自动评价为 0 星。
+- `fire_stage_durations_sec` 具体秒数留空（`null`），由设计者在编辑器配置微调，不在 Schema 中写死。
+- `max_star_containers` 初始为 `3`；受困者受伤时减为 `2`，受困者身亡时减为 `1`。
+- `earned_stars`：灭火 `+1`；带伤救出 `+1`；无伤救出 `+2`。每次星数或容器数变化时触发非常驻 UI 即时闪现。
 
 ## 8. SpatialPresentationSchema（候选字段）
 
@@ -131,58 +141,62 @@ UE 中可以考虑 JSON、`UDataAsset`、`UPrimaryDataAsset`、`UDataTable`、`U
 {
   "entity_id": null,
   "world_transform": null,
-  "visual_form": null,
+  "visual_form": "WorldSpace2DPaper",
+  "carrier_type": "PaperSprite_Or_PlaneMesh",
+  "material_blend_mode": "Masked_TwoSided",
+  "pivot_rule": "BottomCenter",
+  "plane_orientation_rule": "UprightFacingCameraPlane_NoPitchTilt",
+  "turn_behavior": "HorizontalFlip",
   "visual_asset_ref": null,
   "visual_anchor_offset": null,
-  "plane_orientation_rule": null,
-  "interaction_shape": null,
-  "render_sort_policy": null
+  "interaction_shape": null
 }
 ```
 
 已确认的约束：
-- `world_transform` 是世界中的位置，不是 UI 屏幕坐标。
-- 角色 / 可交互物品的 `visual_form` 必须符合**纸片表现**。
-- 房间结构本身仍属于 3D 场景。
+- `world_transform` 是世界中的 3D 位置，角色可在水平地面 `X/Y` 四/八方向移动（无跳跃）。
+- 角色、NPC 与可交互物品采用竖直立于 3D 地面的 2D 纸片（底边中心接地、`Masked` 双面材质写深度、左右转身水平翻转）。
+- 头顶思想泡泡锚定角色头顶 3D 坐标并投影至屏幕空间（Screen-space）显示。
 
-未确认的值：
-- Pivot 的具体局部坐标。
-- 纸片朝向（Billboard / 固定方向 / 跟随对象）。
-- Sprite 单位尺寸、比例尺、碰撞体尺寸。
-- 透明排序 / 层级规则。
-
-## 9. CameraConfig（字段留空）
+## 9. CameraConfig（已确认区间与待校准坐标）
 
 ```json
 {
-  "reference_goal": "用户提供的第二张室内参考图",
-  "projection_mode": null,
+  "reference_goal": "elements/room-example.png（同时可见墙壁、天花板、地面及左侧敞开门口拦路区的室内透视纵深构图）",
+  "projection_mode": "Perspective",
+  "camera_mode": "SingleFixedIndoorObliqueFrontLeftLookingDeep_NoCut",
+  "exterior_to_interior_staging": "VisibleThroughOpenDoorwayInSameFrame",
+  "fov_deg_range": [55, 65],
+  "pitch_down_deg_range": [5, 15],
   "location_cm": null,
-  "rotation_deg": null,
-  "fov_deg": null,
-  "orthographic_width": null,
-  "camera_follow_mode": null
+  "yaw_deg": null
 }
 ```
 
-**视觉目标已确定**：室内纵深构图，而不是高空俯视盒子。
+- **[已确认]** 全程采用单固定室内 3D 透视机位（不切镜头），位于房间前方偏左朝室内深处拍摄，`FOV 55°–65°`，俯视角 `5°–15°`，同时可见墙壁、天花板和地面，并透过敞开的门口/玄关在同一画面看到门外拦路队长与安全区。
+- `location_cm` 与 `yaw_deg` 在灰盒关卡搭建时按上述视觉约束实测填入。
 
-**精确投影、机位、镜头运动均待决定**。不得自动填入看似合理的常用值。
-
-## 10. 评分（记录既有构想；判定实现留空）
+## 10. 星容器与评价规则契约（已确认完整闭环）
 
 ```json
 {
-  "rating_0_description": "火没有灭",
-  "rating_1_description": "火灭了",
-  "rating_2_description": "火灭了，人也救出来了",
-  "rating_3_description": "在火势变大之前就把火灭掉了，人直接先被救出来",
-  "rating_resolution_rules": null,
-  "rating_3_mechanics": null
+  "initial_star_containers": 3,
+  "star_sources": {
+    "extinguish_fire": 1,
+    "rescue_civilian_alive": 1,
+    "rescue_civilian_uninjured_bonus": 1
+  },
+  "container_penalties": {
+    "on_civilian_injured": -1,
+    "on_civilian_killed": -1
+  },
+  "hud_feedback_mode": "TransientPopupOnStarOrContainerChange",
+  "third_star_reachability_in_prototype": "Enabled_RescueUninjuredBeforeExtinguish"
 }
 ```
 
-**[已确认]** 三星设计先暂置。描述不是可执行的逻辑规则。
+- **[已确认]** 星容器仅在获得星或容器上限扣减时即时闪现，非常驻显示；单轮在「填满当前剩余星容器」或「火势铺满全屋」时结束。
+- **[已确认]** 当前灰盒直接开放达成 `3 / 3` 满星（优先救出未受伤受困者获得 2 星，再取工具灭火获得第 3 星；若先灭火导致受困者受伤扣减容器，则达成 `2 / 2` 星）。
 
 ## 11. Schema 校验红线
 
