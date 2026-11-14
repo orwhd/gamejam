@@ -99,7 +99,7 @@
 4. [`docs/04_DATA_SCHEMA.md`](docs/04_DATA_SCHEMA.md) — 通用数据字段草案、类型与空值规则；不是最终数值表。
 5. [`docs/05_ASSET_PIPELINE.md`](docs/05_ASSET_PIPELINE.md) — 通用灰盒资源接口、Pivot、朝向、排序与 UE 资产命名前缀规范。
 6. [`docs/06_ART_DIRECTION.md`](docs/06_ART_DIRECTION.md) — 美术总监已确认的通用角色画风（多罗猫式古早萌系搞怪反差人类小人、纯色无阴影插画纸片、2–4 帧小碎步）、2D 出图硬性规范与 3D 场景技术风格。
-7. [`docs/07_UI_UX_SPEC.md`](docs/07_UI_UX_SPEC.md) — 「古早萌系片场手账」UI 风格、Pre-Take 剧本页 / Active Take 极简 HUD / 结算场记板的版式、状态、动效与验收清单。
+7. [`docs/07_UI_UX_SPEC.md`](docs/07_UI_UX_SPEC.md) — 「古早萌系手账」UI 风格、Pre-Take 全屏 Persona 纸页 / Active Take 极简 HUD / 手账结算卡的版式、状态、动效与验收清单。
 8. [`docs/08_LEVEL_01_FIREFIGHTER.md`](docs/08_LEVEL_01_FIREFIGHTER.md) — **第一关《消防员（Fire Call）》唯一完整关卡详案**：交付范围、Persona 文字块清单、角色与 NPC 契约、S 形布局与动线、交互细则、火势配平、0–3 星结算、本关数据草案、完整纸片与合体护送交付清单、UI 挂点、现有工程偏差表及决策记录。
 
 ## 4. Antigravity Agent 执行协议

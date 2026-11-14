@@ -67,7 +67,7 @@
 ## 5. 第一关（消防员关卡）美术与 UI 交付清单入口
 
 - 第一关《消防员（Fire Call）》的全部角色纸片（消防员单人/持工具/喷射、队长阻拦、受困者三态、消防员+受困者合体未伤/受伤两版）、场景交互物与火势视觉清单已统一收归 **[`08_LEVEL_01_FIREFIGHTER.md`](08_LEVEL_01_FIREFIGHTER.md) §10**（导入 UE 时按 [`05_ASSET_PIPELINE.md`](05_ASSET_PIPELINE.md) 前缀规范命名为 `T_ / S_ / FB_ / WBP_`）。
-- UI 组件视觉风格、色板与组件命名（`WBP_PreTakeScript`、`WBP_ActionClapper`、`WBP_TakeResult` 等）统一遵循 **[`07_UI_UX_SPEC.md`](07_UI_UX_SPEC.md)**。
+- UI 组件视觉风格、色板与组件命名（`WBP_PreTakeScript`、`WBP_ActionButton`、`WBP_TakeResult` 等）统一遵循 **[`07_UI_UX_SPEC.md`](07_UI_UX_SPEC.md)**。
 
 ---
 
