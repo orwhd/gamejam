@@ -17,7 +17,7 @@ UE 中可以考虑 JSON、`UDataAsset`、`UPrimaryDataAsset`、`UDataTable`、`U
 - **[已确认]** 删除经历的对象是当前角色的记忆。
 - **[已确认]** Persona 能影响角色的交互。
 - **[已确认]** NPC 的既定剧本与实际世界结果需要分开表示。
-- **[已确认]** 世界对象有实际 3D 位置，纸片只是可见表现。
+- **[已确认]** 世界对象有实际 3D 位置，3D 模型只是可见表现。
 - **[编辑器待填值]** 各文字块与泡泡的具体英文词句、火势阶段具体秒数、移动/交互距离数值、摄像机精确厘米坐标与偏航角均保持 `null`，交由编辑器配置与灰盒实测校准。
 
 ## 3. ProjectConfig（已确认项与待定项）
@@ -141,12 +141,11 @@ UE 中可以考虑 JSON、`UDataAsset`、`UPrimaryDataAsset`、`UDataTable`、`U
 {
   "entity_id": null,
   "world_transform": null,
-  "visual_form": "WorldSpace2DPaper",
-  "carrier_type": "PaperSprite_Or_PlaneMesh",
-  "material_blend_mode": "Masked_TwoSided",
-  "pivot_rule": "BottomCenter",
-  "plane_orientation_rule": "UprightFacingCameraPlane_NoPitchTilt",
-  "turn_behavior": "HorizontalFlip",
+  "visual_form": "StylizedLowPoly3D",
+  "carrier_type": "StaticMesh_Or_SkeletalMesh",
+  "shading": "SoftShading_Or_FlatColor_NoOutline",
+  "pivot_rule": "FootContactCenter",
+  "turn_behavior": null,
   "visual_asset_ref": null,
   "visual_anchor_offset": null,
   "interaction_shape": null
@@ -155,7 +154,8 @@ UE 中可以考虑 JSON、`UDataAsset`、`UPrimaryDataAsset`、`UDataTable`、`U
 
 已确认的约束：
 - `world_transform` 是世界中的 3D 位置，角色可在水平地面 `X/Y` 四/八方向移动（无跳跃）。
-- 角色、NPC 与可交互物品采用竖直立于 3D 地面的 2D 纸片（底边中心接地、`Masked` 双面材质写深度、左右转身水平翻转）。
+- 角色、NPC 与可交互物品均为《多罗与流星》PS2 风格简化卡通低面数 3D 模型，原点在脚底 / 底面接地中心；灰盒阶段可用占位几何体。
+- `carrier_type` 取决于动画方式，`turn_behavior` 待决定（见 `06_ART_DIRECTION.md`）。
 - 头顶思想泡泡锚定角色头顶 3D 坐标并投影至屏幕空间（Screen-space）显示。
 
 ## 9. CameraConfig（已确认区间与待校准坐标）
