@@ -64,7 +64,7 @@
 | C++ / Blueprint 分工 | **C++ 负责底层权威规则与状态机；关卡配置、文字块数据与 UI 表现开放给编辑器（Details / DataAsset / UMG）调整**（[已确认]） |
 | 目标平台、输入设备 | **目标交付平台：Windows**（macOS 仅作为开发机，需保证跨平台兼容）；**输入设备：键盘 + 鼠标**（键盘 `WASD` 移动、`E` 交互、`R` 随时重开，鼠标操作 `Pre-Take` 全屏 Persona 纸页与手账结算卡按钮）（[已确认]） |
 | 当前关卡交付范围 | **优先完整交付第一个「消防员」关卡场景闭环**（后续关卡暂未设定，当前不设多关流转）（[已确认]） |
-| 项目现有资产与目录 | 已核验工程目录 `DirectorCutJam/`：含 `Source/DirectorCutJam/`（C++ 模块）、`Content/Maps/Firefighter.umap`、`Content/Materials/M_*`（基础材质）、`Scripts/create_map.py`、`Validation/`、`design/ui-mockup/index.html`（v0.2 静态手账 UI 参考稿）、`assets/example/`（角色、3D 室内与交互参考图库，含室内参考图 `assets/example/envirments/example_0.png`）。**注：现有工程中的高空俯视机位违反红线 7，后续必须重构为定高定角平移跟随相机；现有 3D 几何角色可收归为主角 `VisualPresentationMode` 开关下的 `3D 占位` 模式先行救急验证，并与 `2D 纸片` 模式一键切换对比。** |
+| 项目现有资产与目录 | 已核验工程目录 `DirectorCutJam/`：含 `Source/DirectorCutJam/`（C++ 模块）、`Content/Maps/Firefighter.umap`、`Content/Materials/M_*`（基础材质）、`Scripts/create_map.py`、`Validation/`、`design/ui-mockup/index.html`（v0.2 静态手账 UI 参考稿）、`assets/example/`（角色、3D 室内与交互参考图库，含室内参考图 `assets/example/envirments/example_0.png`）。**注：现有工程中的高空俯视机位与 3D 球/方块角色属于早期技术占位，违反红线 6、7，后续必须重构，不视为已批准的视觉规范。** |
 
 ## 1. 需求状态标记
 
@@ -82,7 +82,7 @@
 3. **[已确认]** Persona 可描述角色经历、性格及能力；删除经历表示**当前角色忘记经历**，不是整个世界的历史改变。
 4. **[已确认]** NPC 保留自身记忆，按预设剧本行动；玩家的介入可以改变实际事件结果。
 5. **[已确认]** Persona 可以限制角色交互。玩家仍可移动，但可能无法执行某个交互；被心理因素阻止时显示思想泡泡。
-6. **[已确认]** 房间 / 场景为 3D；人物及可交互物品的目标可见表现为 2D 纸片（特效可为 3D）；**主角（及可选场景对象）采用「单套底层逻辑 + `2D 纸片 / 3D 占位` 可切换视觉表现开关（`VisualPresentationMode: Paper2D | Mesh3D_Placeholder`）」**——允许先用 3D 占位救急跑通闭环，并在编辑器内一键切换对比 2D 与 3D 哪套视觉效果更好（严禁拆成两套独立主角逻辑系统）。
+6. **[已确认]** 房间 / 场景为 3D；人物及可交互物品的**可见表现**为 2D 纸片；特效可为 3D（开发期主角表现层允许保留 `VisualMode` 切换开关，支持 3D 几何白模占位救急验证与效果对比，详见 [`docs/03_ARCHITECTURE.md`](docs/03_ARCHITECTURE.md) 与 [`docs/08_LEVEL_01_FIREFIGHTER.md`](docs/08_LEVEL_01_FIREFIGHTER.md) §12.1）。
 7. **[已确认]** 摄像机透视层次参考室内参考图（`assets/example/envirments/example_0.png`）：`Active Take` 全程采用**定高、定对地俯角、锁死水平朝向的 3D 室内透视平移跟随相机**（`FOV 55°–65°`，对地轻俯角 `5°–15°` 恒定不变，离地高度 `Z` 恒定不变且位于地板与封闭天花板之间，水平朝向 `Yaw` 锁死不旋转，沿水平面 `X/Y` 平滑平移跟随主角并在场景边缘限位 Clamp），同屏可见墙壁、封闭天花板与地面；门外入口区与室内采用朝镜头一侧敞开的**娃娃屋横切剖面**相连衔接（中间隔墙开门口并留窗洞/前半截低矮剖面避让），主角在门外受阻时仍可透过门口/视窗同屏看到拦门队长及室内近门侧火势与受困者状态变化；严禁保留早期工程中的高空俯视无顶盒子视觉效果。
 8. **[已确认]** 目前为可交互灰盒。不得以正式美术、材质、像素画、精致动画作为现阶段必要产出。
 9. **[技术必需]** 逻辑位置与可见纸片保持关联；不以贴屏幕的 HUD 图像冒充房间里的世界对象。

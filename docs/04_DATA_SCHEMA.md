@@ -145,13 +145,13 @@ UE 中可以考虑 JSON、`UDataAsset`、`UPrimaryDataAsset`、`UDataTable`、`U
 {
   "entity_id": null,
   "world_transform": null,
-  "visual_presentation_mode": "Mesh3D_Placeholder | Paper2D",
-  "visual_form": "WorldSpace2DPaper_Or_3DPlaceholderToggle",
-  "carrier_type": "PaperSprite_Or_PlaneMesh_Or_StaticSkeletalMesh",
+  "visual_mode": "2D_Paper | 3D_Mesh",
+  "visual_form": "WorldSpace2DPaper_Or_WorldSpace3DMesh",
+  "carrier_type": "PaperSprite_Or_PlaneMesh_Or_StaticMesh",
   "material_blend_mode": "Masked_TwoSided",
   "pivot_rule": "BottomCenter",
   "plane_orientation_rule": "UprightFacingCameraPlane_NoPitchTilt",
-  "turn_behavior": "HorizontalFlip_WhenPaper2D_Or_OrientToMovement_WhenMesh3D",
+  "turn_behavior": "HorizontalFlip_For2D_Or_OrientToMovement_For3D",
   "visual_asset_ref": null,
   "visual_anchor_offset": null,
   "interaction_shape": null
@@ -160,7 +160,8 @@ UE 中可以考虑 JSON、`UDataAsset`、`UPrimaryDataAsset`、`UDataTable`、`U
 
 已确认的约束：
 - `world_transform` 是世界中的 3D 位置，角色可在水平地面 `X/Y` 四/八方向移动（无跳跃）。
-- **单套逻辑 + `visual_presentation_mode` 切换开关**：主角（及可选世界对象）在共用同一套 `world_transform`、3D 碰撞体与交互逻辑的前提下，支持在 `Mesh3D_Placeholder`（先用 3D 占位救急跑通闭环）与 `Paper2D`（底边中心接地、`Masked` 双面写深度、左右转身水平翻转的竖直 2D 纸片）之间一键切换对比视觉效果。
+- **[已确认] 主角表现层切换开关 (`visual_mode`)**：底层权威逻辑 100% 保持单套，表现层开放 `2D_Paper` 与 `3D_Mesh` 切换开关。开发期 2D 资产未完备时，可先以 3D 几何模型/白模占位救急跑通关卡验证，并供视觉效果对比测试。
+- 角色、NPC、合体护送状态与可交互物品在 `2D_Paper` 模式下采用竖直立于 3D 地面的 2D 纸片（底边中心接地、`Masked` 双面材质写深度、左右转身水平翻转）。
 - 头顶思想泡泡与近距 `[E]` 提示锚定世界 3D 坐标并投影至屏幕空间（Screen-space）显示。
 
 ## 9. CameraConfig（已确认不变量与待校准参数）

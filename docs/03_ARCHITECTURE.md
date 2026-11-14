@@ -37,13 +37,20 @@ Gameplay Events / State Changes
     |
     v
 Presentation Adapters
-    +-- World-space character/object visuals (2D Paper / 3D Mesh toggle adapter)
+    +-- World-space paper visuals (Paper2D Sprite / Plane Mesh)
+    +-- World-space 3D mesh fallback / debug visuals (3D Mesh 占位与效果对比)
     +-- Thought bubble / Persona UI
     +-- Camera / VFX / Audio (if present)
 ```
 
-**[技术必需]** UI、Sprite/Mesh、镜头和特效不能成为 Persona 规则、交互是否允许的权威数据源。
-**[已确认]** **严禁编写两套独立的主角逻辑系统**：`2D 纸片（Paper2D）` 与 `3D 占位/模型（Mesh3D_Placeholder）` 仅作为同一个主角 Actor 下的表现层适配器开关（`VisualPresentationMode`），100% 共用同一套移动、3D 碰撞、定高定角平移跟随相机、Persona 标签门控、按 `E` 交互与读条及动态星容器状态机；开发期默认可先用 `3D` 占位救急验证全流程，并支持在编辑器内一键切换对比两套视觉表现。
+**[技术必需]** UI、Sprite、3D 模型、镜头和特效不能成为 Persona 规则、交互是否允许的权威数据源。
+
+### 主角表现层切换开关（VisualMode：2D 纸片 / 3D 占位）`[已确认]`
+- **底层权威单一性**：主角底层始终为单套权威逻辑（统一基于 `ACharacter` 胶囊体、地面四/八方向移动、交互检测、Persona 门控、跟随相机与星容器事件）；
+- **表现层开关（`VisualMode`）**：主角呈现组件开放可在 UE 编辑器（Details / DataAsset）切换的模式枚举：
+  - **`2D_Paper`**：隐藏 3D Mesh，显示接地竖直 2D 纸片，左右变向时执行水平镜像翻转（Flip）；
+  - **`3D_Mesh`**：隐藏 2D 纸片，显示 3D 网格体（开发期使用技术几何/白模占位救急，移动时沿移动方向旋转）；
+- **目的与用途**：① 在正式 2D 纸片资源未齐备前，先用 3D 占位模型救急跑通关卡机制与操作手感；② 提供实机一键切换对比，直观评估 2D 纯色纸片与 3D 风格在场景中的视觉表现。
 
 ## 3. ECS 职责（逻辑模型，不是已选引擎 API）
 
@@ -61,7 +68,7 @@ Presentation Adapters
 - Interaction 数据：可执行动作与规则依赖。
 - NPC script 数据：预设行动的状态与进度。
 - World transform：世界坐标与碰撞标识。
-- Presentation binding：逻辑对象与 2D 纸片 / 3D 占位网格（含切换开关 `VisualPresentationMode`）及思想泡泡的关联。
+- Presentation binding：逻辑对象与纸片 / 思想泡泡的关联。
 - Outcome 数据：局内子目标完成情况、场景危机阶段与动态星容器状态。
 
 > 这些是**职责分类**，不表示必须创建同名 UE Component，也不自动增加数值系统。
@@ -72,7 +79,7 @@ Presentation Adapters
 - Interaction Resolver：依据当前角色状态判断是否允许交互。
 - NPC Script Runner：按配置推进 NPC 原定行动。
 - Outcome Evaluator：根据场景危机阶段演化与目标完成/失效事实维护动态星容器及最终星级。
-- Presentation Update：读取权威状态与当前 `VisualPresentationMode`，驱动对应的 2D 纸片或 3D 占位组件、思想泡泡及 UI。
+- Presentation Update：读取状态并显示纸片、泡泡、UI。
 
 这些英文名称是**占位职责名**，不是必须使用的 UE 类名。
 

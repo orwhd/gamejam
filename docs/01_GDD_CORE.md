@@ -108,5 +108,5 @@
 
 - **编辑与重开闭环**：仅在 `Pre-Take` 全屏 Persona 纸页允许删减可编辑文字块；进入 `Active Take` 后隐藏并锁定编辑，单轮内不可单块恢复，仅通过 `Restart Take`（`R` 键或结算按钮）整轮重置。
 - **确定性因果与提示**：NPC 不因主角删除记忆而改变历史或态度；交互被心理限制或前置条件拒绝时，通过锚定头顶 3D 坐标的屏幕空间思想泡泡给出准确线索，不令玩家误以为按键失灵。
-- **2.5D 空间表现与 2D/3D 切换开关**：`Active Take` 全程采用定高、定俯角（`5°–15°`）、锁死水平朝向的 3D 室内透视平移跟随相机（`FOV 55°–65°`，水平 `X/Y` 平滑跟随 + 边缘 Clamp），封闭天花板并以朝镜头敞开的娃娃屋横切剖面衔接门外与室内；主角（及可选世界对象）在共用同一套底层逻辑的前提下提供 `VisualPresentationMode (Mesh3D_Placeholder / Paper2D)` 切换开关，支持先用 3D 占位救急跑通闭环，并随时一键切为底边中心接地的竖直 2D `Masked` 双面纸片对比视觉效果（见 [`02_SPATIAL_MATH.md`](02_SPATIAL_MATH.md) 与 [`05_ASSET_PIPELINE.md`](05_ASSET_PIPELINE.md)）。
+- **2.5D 空间表现**：`Active Take` 全程采用定高、定俯角（`5°–15°`）、锁死水平朝向的 3D 室内透视平移跟随相机（`FOV 55°–65°`，水平 `X/Y` 平滑跟随 + 边缘 Clamp），封闭天花板并以朝镜头敞开的娃娃屋横切剖面衔接门外与室内；人物与交互物均为底边中心接地的竖直 2D `Masked` 双面纸片（见 [`02_SPATIAL_MATH.md`](02_SPATIAL_MATH.md) 与 [`05_ASSET_PIPELINE.md`](05_ASSET_PIPELINE.md)）。
 - **第一关专项偏差与验收清单**：现有 `DirectorCutJam/` 工程重构对照表及第一关详细验收项以 [`08_LEVEL_01_FIREFIGHTER.md`](08_LEVEL_01_FIREFIGHTER.md) §11 为准。
