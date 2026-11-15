@@ -1,172 +1,73 @@
-# 03 — ARCHITECTURE：架构边界、ECS 与状态机
+# 03 — ARCHITECTURE：权威规则分层、VisualMode 开关与三态交互裁决
 
-> 本文定义**职责与依赖方向**；不替用户选择 Blueprint、C++、Mass Entity 或第三方 ECS 的具体实现。
+> 本文定义权威游戏逻辑与表现层的职责边界及状态流转。底层规则由 C++ 权威维护，配置数据与视觉表现开放给 UE 编辑器（`DataAsset / Details / UMG`）。
 
-## 1. 产品与技术级选型状态
+---
 
-| 决策 | 状态 |
-|---|---|
-| UE 具体版本 | **[已确认]** UE 5.8（开发机环境 5.8.4） |
-| 目标交付平台与跨平台约束 | **[已确认]** Windows 打包提交，macOS 仅作开发机；**[技术必需]** 禁止依赖 macOS 专有路径或仅 Metal 可用的特性 |
-| C++ 与编辑器分工 | **[已确认]** C++ 负责底层权威规则与状态机；关卡配置、文字块数据与 UI 表现开放给编辑器（Details / DataAsset / UMG）调整 |
-| ECS：UE Actor/Component、Mass Entity 或自定义方式 | **TBD**（由编程 Agent 在 C++ 权威框架下按原型规模选定，不预设 Mass Entity） |
-| NPC 剧本：Sequencer / 状态机 / 定时事件等 | **TBD** |
-| Persona 语义解释机制 | **[已确认]** 确定性规则 / 多标签映射（**不接入 LLM**；单块可赋予 `0..N` 个标签，删块同步移除） |
-| 持久化 / 存档 / 关卡重放方案 | **[已确认]** 单局 / 按关重开，无跨退出存档；仅 `Pre-Take` 可删块，单轮内不可单块撤销，仅靠 `Restart Take` 整轮重置 |
-
-**规则**：先界定 Entity / Component / System 的逻辑边界，再选 UE 具体承载技术。不得把「需要 ECS 文档」理解为用户已经选定 Mass Entity。
-
-## 2. 逻辑层级
+## 1. 逻辑与表现严格分层 `[技术必需]`
 
 ```text
-User Input
+User Input (Mouse Cut / WASD / E / Tab / R)
     |
     v
-Command / Intent
+Authoritative Gameplay Rules (C++)
+    +-- Persona Tag Manager    (管理固定/可删词条，重建 Limit / KnowHow / Trait 标签集)
+    +-- Interaction Resolver   (按标签集 + 场景状态裁决：正常执行 / 失忆修正执行 / 拒绝执行 / 彩蛋吐槽)
+    +-- Stage & Crisis Runner  (推进火势阶段、剩余火点计数、护送冻结与危机延缓)
+    +-- Star Container Judge   (维护 EarnedStars 与 MaxStarContainers，裁决单轮结算)
     |
     v
-Gameplay Rules  <---->  Authoritative Game State
-    |
-    +-- Persona rules
-    +-- Interaction permission
-    +-- NPC script progression
-    +-- Scene outcome evaluation
-    |
-    v
-Gameplay Events / State Changes
-    |
-    v
-Presentation Adapters
-    +-- World-space paper visuals (Paper2D Sprite / Plane Mesh)
-    +-- World-space 3D mesh fallback / debug visuals (3D Mesh 占位与效果对比)
-    +-- Thought bubble / Persona UI
-    +-- Camera / VFX / Audio (if present)
+Presentation Adapters (Read-Only Subscribers)
+    +-- 2.5D Sticker Paper Visuals (模切白边蜡笔贴纸纸片 + 程序化蹦跶摇摆 + 双卡错位背人)
+    +-- 3D Mesh Fallback Visuals   (VisualMode 切换开关：开发期 3D 白模救急与视觉效果对比)
+    +-- Screen-Space Bubbles       (锚定头顶输出受阻线索、失忆乌龙或角色彩蛋吐槽泡泡)
+    +-- Journal & Stage UI         (Pre-Take 手账页、Tab 只读速览、顶部闪现星容器、手账结算卡)
+    +-- Dollhouse Pan Camera       (定高定俯角锁死朝向，沿 X/Y 平滑跟随 + Clamp)
 ```
 
-**[技术必需]** UI、Sprite、3D 模型、镜头和特效不能成为 Persona 规则、交互是否允许的权威数据源。
+**解耦红线**：UI、2D 贴纸纸片、3D 占位模型、摄像机和特效**绝对不能**反向充当交互权限或星级计算的权威数据源。
 
-### 主角表现层切换开关（VisualMode：2D 纸片 / 3D 占位）`[已确认]`
-- **底层权威单一性**：主角底层始终为单套权威逻辑（统一基于 `ACharacter` 胶囊体、地面四/八方向移动、交互检测、Persona 门控、跟随相机与星容器事件）；
-- **表现层开关（`VisualMode`）**：主角呈现组件开放可在 UE 编辑器（Details / DataAsset）切换的模式枚举：
-  - **`2D_Paper`**：隐藏 3D Mesh，显示接地竖直 2D 纸片，左右变向时执行水平镜像翻转（Flip）；
-  - **`3D_Mesh`**：隐藏 2D 纸片，显示 3D 网格体（开发期使用技术几何/白模占位救急，移动时沿移动方向旋转）；
-- **目的与用途**：① 在正式 2D 纸片资源未齐备前，先用 3D 占位模型救急跑通关卡机制与操作手感；② 提供实机一键切换对比，直观评估 2D 纯色纸片与 3D 风格在场景中的视觉表现。
+### 1.1 主角表现层切换开关（`VisualMode`：`2D_Paper | 3D_Mesh`） `[已确认]`
+- **底层权威单一性**：主角始终共用唯一一套 `ACharacter` 胶囊体碰撞、地面移动、交互检测、Persona 门控与跟随相机逻辑。
+- **表现层枚举开关**：在主角表现组件与 `LevelConfigData` 中开放 `VisualMode`：
+  - **`2D_Paper`（正式交付默认）**：隐藏 3D Mesh，显示接地竖直 2D 蜡笔贴纸纸片（[`firefighter.png`](../assets/characters/firefighter.png)），左右移动执行水平翻转（Flip）并叠加轻量程序化小碎步摇摆跳跃；
+  - **`3D_Mesh`（开发救急与对比）**：隐藏 2D 纸片，显示 3D 几何白模占位并沿移动方向朝向旋转，便于在切图未导入前验证关卡及实机一键对比 2D/3D 观感。
 
-## 3. ECS 职责（逻辑模型，不是已选引擎 API）
+---
 
-### Entity / Actor 边界
-- Player-controlled character：角色身份与世界对象。
-- NPC：按照固定剧本推进的世界对象。
-- Interactable：场景中的可交互目标。
-- Scene：场景 / 事件状态容器。
+## 2. 核心状态机 `[已确认]`
 
-对象的正式类名与父类：**TBD**。
+### 2.1 演出三阶段与 `Tab` 只读速览
+```text
+[Pre-Take 全屏手账编辑] --(点击 ACTION! / Space)--> [Active Take 舞台实机 (支持 Tab 只读速览)]
+          ^                                                    |
+          |                                         (满剩余容器 或 终局失控)
+          |                                                    v
+          +---------(按 R 键 或 点击 [R] Retake 整轮重置)--- [Take Result 手账结算卡]
+```
+- **词条状态**：`PRESENT --(仅限 Pre-Take 点击剪除)--> DELETED --(仅限 Restart Take 整轮重置)--> PRESENT`。
+- **锁定与速览**：进入 `Active Take` 后词条不可增删；按 `Tab` 键呼出半透明只读手账浮层核对当前保留/划除的记忆。
 
-### Components / Data
-- Persona 数据：原始文字块、当前存在的块、编辑权限。
-- Character memory / behavioral restrictions：与 Persona 有关的可查询行为状态。
-- Interaction 数据：可执行动作与规则依赖。
-- NPC script 数据：预设行动的状态与进度。
-- World transform：世界坐标与碰撞标识。
-- Presentation binding：逻辑对象与纸片 / 思想泡泡的关联。
-- Outcome 数据：局内子目标完成情况、场景危机阶段与动态星容器状态。
-
-> 这些是**职责分类**，不表示必须创建同名 UE Component，也不自动增加数值系统。
-
-### Systems / Logic
-- Persona Edit Validator：检查编辑动作是否作用于可编辑的**完整文字块**。
-- Persona State Updater：应用被删除的经历对当前角色记忆的变化。
-- Interaction Resolver：依据当前角色状态判断是否允许交互。
-- NPC Script Runner：按配置推进 NPC 原定行动。
-- Outcome Evaluator：根据场景危机阶段演化与目标完成/失效事实维护动态星容器及最终星级。
-- Presentation Update：读取状态并显示纸片、泡泡、UI。
-
-这些英文名称是**占位职责名**，不是必须使用的 UE 类名。
-
-## 4. 最小状态模型
-
-### 4.1 Take 阶段与 Persona 块状态
+### 2.2 三态交互裁决模型（含场景彩蛋 NPC 交互）
+每次玩家按 `E` 触发交互时，权威层按以下优先级评估：
 
 ```text
-[Pre-Take 全屏 Persona 纸页] --(Start Take 开始切入 3D 房间)--> [Active Take 正式演出] --(结算条件满足)--> [Take Result 结算]
-             ^                                                        |                                      |
-             +--------------(Restart Take / 按 R 键重拍重置)----------+--------------------------------------+
+InteractionRequest(Actor, Target)
+  0. 若目标为纯叙事彩蛋 NPC（如室内划火柴幻想吃烤鸡的小女孩 little girl.png）：
+       -> FLAVOR_BUBBLE -> 不消耗状态，根据当前记忆弹出对应爆笑吐槽泡泡
+  1. 检查目标自身是否仍有效（如受困者已遇难 -> 直接静默关闭交互并隐藏 [E]）
+  2. 检查 BlockingPersonaTags（含条件型教条，如“场上仍有未灭火点时禁止触碰爱心裤衩伤员”）
+       -> 命中限制 -> DENIED -> 弹出「心理/教条受阻线索泡泡」
+  3. 检查 RequiredPersonaTags（专业知识前提，如 KnowHow.UseExtinguisher）
+       -> 缺失前提 -> DENIED -> 弹出「失忆乌龙搞笑泡泡」（把灭火器当成小女孩烤鸡用的大号番茄酱瓶）
+  4. 检查 RequiredSceneCapabilities（场景道具前提，如是否已拾取灭火器）
+       -> 缺失道具 -> DENIED -> 弹出「缺工具提示泡泡」
+  5. 允许执行（ALLOWED）并检查 TraitPersonaTags（如天使修狗负重锻炼记忆 Trait.StrongLegs）：
+       -> 具备标签 -> NORMAL_EXECUTION（高速抱人奔跑；突破红高跟魔女拦门时附带俏皮气泡）
+       -> 缺失标签 -> DEGRADED_EXECUTION（失忆变面条腿：龟速抱人 + 弹出吃力喘气吐槽泡泡）
 ```
 
-```text
-PRESENT --[仅在 Pre-Take 合法删除]--> DELETED
-DELETED --[仅通过 Restart Take 整轮重置]--> PRESENT
-```
-
-- **[已确认]** `Pre-Take` 阶段显示全屏纯文字 Persona 纸页（隐藏 3D 房间画面，世界时间暂停），仅在此阶段且文字块 `can_delete == true` 时允许触发 `PRESENT -> DELETED`；点击 `ACTION!` 进入 `Active Take` 后切入 3D 房间画面，默认隐藏该纸页并锁定编辑权限（演出期间是否支持按 `Tab` 只读查看见 [`07_UI_UX_SPEC.md`](07_UI_UX_SPEC.md) §5.4 `[待决定]`）。
-- **[已确认]** 单轮演出内不支持单块撤销恢复；`DELETED -> PRESENT` 仅在触发 `Restart Take`（按 `R` 键或点击手账结算卡 `[R] Retake` 按钮，退回全屏 `Pre-Take` 并整轮重置 Persona 与场景状态）时发生。
-- **[已确认]** 灰盒原型阶段不启用重排状态机（仅保留 `can_reorder` 数据字段扩展位，当前关卡全为 `false`）；当前仅交付第一个「消防员」关卡闭环，不设跨关卡流转状态机。
-
-### 4.2 交互判定（确定性标签与场景前置条件检查）
-
-```text
-InteractionRequest
-    -> Evaluate(active Persona tags + scene prerequisite state)
-       -> ALLOWED -> ExecuteRequestedAction
-       -> DENIED  -> ReturnReason -> ThoughtBubble (心理受阻线索 或 缺少前置条件吐槽)
-```
-
-- **[已确认]** 每个处于 `PRESENT` 状态的文字块向角色提供 `0..N` 个显式状态标签（可含限制类标签与能力/认知前提类标签）；删除文字块即移除其提供的全部标签，不自动反向赋权。
-- **[已确认]** 交互判定同时检查场景客观条件（如是否持有前置工具、目标是否仍可交互）、所需前置标签是否具备、以及是否存在阻止该交互的心理限制标签。
-- **[已确认]** 因心理限制被拒绝时，`ThoughtBubble` 输出「表层抗拒态度 + 隐晦指向过去经历的线索」；因缺少场景前置道具/条件被拒绝时，同样可返回原因并由 `ThoughtBubble` 输出角色吐槽提示。
-
-### 4.3 NPC、场景危机演化与事件结果
-
-```text
-Preauthored NPC Script     -> NPC intended actions (NPC 按预设站位、姿态或行动推进，不随主角删记忆改变)
-Scene Crisis Progression   -> InitialActive -> GoalDegraded (容器扣减/状态变化) -> GoalLost (容器再扣减/关闭交互) -> TerminalCrisis (强制收工)
-Player Interventions       -> 获取前置道具、执行瞬时/持续读条交互（按目标保留进度）、触发合体护送/状态冻结等介入行动
-Scene Actual State         -> 动态星容器即时闪现反馈 & 终局结算
-```
-
-- **[已确认]** NPC 的预设行为与实际场景结果分离；主角删减自身记忆后，NPC 原有记忆、剧本与站位不随之改变，仅主角自身的心理门控与交互能力发生变化。
-- **[已确认]** 权威状态维护关卡子目标与危机阶段：可消除阻挡的交互目标在读条完成后移除阻挡并按规则延缓危机终态；持续交互支持中断且保留当前目标进度；进入合体/接手保护态的受助对象状态冻结，不受后续危机阶段恶化影响；目标永久失效后立即关闭其可交互状态并通知表现层更新。
-- **[已确认]** 主角不设血条死亡；已达成并结算的星数在到达终局失控收工时予以保留。
-- 第一关《消防员》的队长拦门、多火点计数 `RemainingFireCount`、四阶段火势与合体护送具体状态机见 [`08_LEVEL_01_FIREFIGHTER.md`](08_LEVEL_01_FIREFIGHTER.md) §5–§7。
-
-### 4.4 动态星容器与关卡结算模型
-
-- **[已确认]** 权威状态维护 `EarnedStars`（初始 `0`）与 `MaxStarContainers`（初始由关卡目标数决定，如 `3`）：
-  - 当局内目标达成时，按关卡规则增加 `EarnedStars`，触发即时星容器点亮闪现事件；
-  - 当尚未接手的局内目标因危机恶化而永久部分或全部失效时，同步扣减 `MaxStarContainers`，触发即时星容器扣减闪现事件；
-  - 第一关具体加星与扣减条件见 [`08_LEVEL_01_FIREFIGHTER.md`](08_LEVEL_01_FIREFIGHTER.md) §7。
-- **[已确认]** 单轮结束判定：`EarnedStars == MaxStarContainers`（达成当前剩余容器满星）**或** 到达关卡终局危机阶段（如火势铺满全屋）。
-- **[技术必需]** 星容器 UI 仅订阅上述状态变化事件做短暂闪现展示，不得由 UI 自身维护或裁决星数。
-
-## 5. 事件 / 接口合同（仅定义职责，不锁定名称）
-
-| 意图 / 事件 | 需要传递的最小信息 | 具体 API |
-|---|---|---|
-| 请求删除块（仅 `Pre-Take`） | 主角标识、Block ID | TBD |
-| 块状态变化 | 主角标识、Block ID、状态 | TBD |
-| 开始演出（`ACTION!`）/ 重开重置（`Restart Take`，支持 `R` 键与结算按钮） | 关卡/Take 标识 | TBD |
-| 请求执行 / 持续按住 / 中断交互 | 主角、目标、动作标识与输入动作类型（瞬时触发 / 持续按住 / 中断） | TBD |
-| 交互被拒绝（心理限制或缺少前置条件） | 请求标识、拒绝原因类型、思想泡泡文本标识 | TBD |
-| 子目标状态与场景危机阶段推进 | 剩余子目标计数、当前危机阶段、NPC/目标状态变化、危机延缓秒数 | TBD |
-| 星容器即时闪现通知 | 当前已得星数 `EarnedStars`、当前容器上限 `MaxStarContainers`、变化类型 | TBD |
-| 单轮结束结算 | 结束原因（满容器 / 危机终态）、最终星数、容器上限与客观结果摘要 | TBD |
-
-如项目已有事件系统，优先检查后适配；不得据此表凭空建立复杂 Event Bus。
-
-## 6. 表现与逻辑解耦红线
-
-1. 删掉 Sprite **不能**删除 NPC、角色或交互对象的逻辑实体。
-2. 修改 UI 文字 **不能**作为 Persona 变化的唯一数据操作；必须先通过编辑规则验证。
-3. 视觉纸片的 Pivot、材质和朝向 **不能**决定交互权限。
-4. 相机如何移动 **不能**改变世界对象的真实坐标或其 Persona 状态。
-5. 交互失败时，思想泡泡是**规则结果的反馈**，不是由泡泡控件决定是否允许交互。
-6. 角色被删除的记忆影响的是当前角色；NPC 过去和记忆不得自动跟着删除。
-
-## 7. Antigravity Agent 执行和验证协议
-
-- Antigravity 的项目规则入口是仓库根目录 `AGENTS.md`。修改架构前，必须先阅读本文件及相关 `docs/` 文档；不要假定设计文档随启动自动注入。
-
-- 先扫描已有项目，列出现有 Gameplay Framework / Blueprints / Assets。
-- 以最小可替换模块验证：Persona 编辑 -> 角色状态变化 -> 交互判定 -> 可视反馈。
-- 遇到本文件标记 `TBD` 的游戏设计问题，不应补写「最终逻辑」。
-- 报告：修改文件、数据流、UE 编辑器测试内容、仍未解决项。
+### 2.3 危机推进与动态星容器规则
+- **火点与延缓**：单处火点按住 `E` 读满即消除自身视觉与 3D 碰撞（打通 `F1` 捷径），并延缓全屋火满时间 `+Δ_delay`；松手中断时**按火点原地保留已喷进度（不衰减）**。
+- **接手状态冻结**：受困者一旦在存活态进入护送，健康状态**立即冻结**；护送期间自动收起灭火工具禁喷射，踏入天使修狗驻守的 `Z_Safe` 结算后自动恢复单人（及已拾取工具）状态。
+- **动态星容器**：达成目标加 `EarnedStars`，未接手伤员受伤/遇难扣减 `MaxStarContainers`；当 `EarnedStars == MaxStarContainers` 或到达 `RoomEngulfed` 时立即弹出手账结算卡。

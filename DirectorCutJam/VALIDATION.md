@@ -1,54 +1,93 @@
-# 实际验证记录
+# DirectorCutJam — Win64 DX12 Validation Record (v2)
 
-验证日期：2026-11-13，Asia/Shanghai。环境：UE 5.8.4（CL 58902052）、Apple M4、24 GB、macOS 27.0；实际图形 RHI 为 Metal SM5。
+## Environment
 
-## 已实现内容
+- **OS**: Windows 11 (`25H2`, Build `10.0.26200.9974`)
+- **Engine**: Unreal Engine `5.8.4` (`DirectorCutJam.uproject`)
+- **RHI / GPU**: `D3D12 (SM5)` / `GameViewer Virtual Display Adapter`
+- **CPU / RAM**: `AMD Ryzen 7 8845H w/ Radeon 780M Graphics` / `32 GB`
+- **DDC Path**: `UE-LocalDataCachePath = D:\UE_DDC`
 
-- **P0**：预定义 Persona 整块删除、固定身份不可删除、显式心理效果查询、执行入口权限检查、头顶 UMG 思想泡泡、可切换的额外记忆原因。Persona 变化立即更新面板并清除旧拒绝泡泡。
-- **P1**：真实灰盒关卡、消防员移动、上司固定命令/固定移动、入口/出口、受困者救援、灭火与场景事实记录。NPC 事件序列不读取 Persona。
-- **P2**：0/1/2 星结果界面、整场重开、Persona 调试恢复、阻止原因显示、功能键测试工具。三星仅保留扩展事件，当前没有三星解法。
+---
 
-## 实际结果
+## Latest Verified Runs (2026-11-14)
 
-| 验证 | 结果及证据 |
-| --- | --- |
-| UnrealHeaderTool / C++ Editor 构建 | **成功**；最终构建日志 `Validation/Build.log` |
-| 实际资产创建 | **成功**；Unreal Python 创建并保存 `Content/Maps/Firefighter.umap` 与八个 `.uasset` 材质；随后由编辑器重新载入该地图 |
-| 图形 PIE 自动验收 | **成功**；独立 PIE 窗口，`DirectorCut.PIE.Acceptance`，2026-11-13 03:10:37–03:10:52；报告 1 项通过、0 失败、0 测试警告，测试耗时约 14.35 秒；进程退出码 0 |
-| 原始记忆 → 受阻 → 泡泡 | **通过**；包括执行入口直接调用受阻、思想文字存入实际 UMG、短/长提示配置 |
-| UMG 删除 → 权限解锁 | **通过**；调用实际删除按钮的 OnClicked 委托，面板更新、限制效果消失、固定身份仍在，重新进入成功；删除后旧泡泡清除 |
-| NPC 一致性 | **通过**；相同脚本时刻下，删除前后的事件记录及上司位置相同，禁入命令仍有效 |
-| 救援 / 灭火 / 星级 | **通过**；0 星失败、只灭火 1 星、灭火且救援 2 星；目标视觉同步隐藏；重复行动及结算后行动被拒绝 |
-| 重开 | **通过**；初始 Persona、心理阻碍、玩家位置、NPC 首条命令、火灾与受困者恢复 |
-| 编辑时机测试配置 | **通过**；关闭演出中编辑时，先编辑后开始，开始后不允许重新打开面板 |
-| 输入路径 | **通过**；注入 W 输入后 Character 实际移动超过 100 UE 单位；注入 E 产生拒绝想法；注入 Tab 打开 Persona |
-| 视觉检查 | **通过当前截图检查**；实际查看独立 PIE 的受阻、Persona、删除后与 2 星结算画面；修正了初版文字重叠与泡泡空白问题 |
-| 一键独立游戏预览 | **启动冒烟检查通过**；实际运行交付的 `Play.command`，加载 Firefighter 地图、生成 1440×900 截图，在 `-seconds=8` 测试参数下正常退出，退出码 0。此项没有再次完成整套救援流程 |
+### 1. C++ Compilation (`DirectorCutJamEditor Win64 Development`)
 
-机器报告：`Validation/Report.json`。完整最终 PIE 日志：`Validation/PIE.log`。独立游戏启动日志：`Validation/Standalone.log`。源文件、配置、脚本与资产的 SHA-256：`Validation/FileHashes.json`。
+```powershell
+D:\UE_5.8\Engine\Binaries\ThirdParty\DotNet\10.0\win-x64\dotnet.exe `
+  "D:\UE_5.8\Engine\Binaries\DotNET\UnrealBuildTool\UnrealBuildTool.dll" `
+  DirectorCutJamEditor Win64 Development `
+  -Project="d:\antigravity_projects\gamejam\DirectorCutJam\DirectorCutJam.uproject" -WaitMutex
+```
 
-截图：`Validation/Blocked.png`、`Persona.png`、`Deleted.png`、`Result.png`、`Standalone.png`，均来自真实 Unreal 渲染。
+- **Result**: `Succeeded` (`7/7` actions, `27.50 seconds`, exit code `0`, building final polish changes across `DCPlayerCharacter.cpp`, `DCFirefighterActors.cpp`, `DCHudOverlayWidget.cpp`, `DCStarPopupWidget.cpp`, `DCValidation.cpp`, and linking `UnrealEditor-DirectorCutJam.dll`).
 
-## 验证边界与已知问题
+### 2. Asset & Map Rebuild (`Scripts/create_map.py`)
 
-1. **嵌入式编辑器视口结束 PIE 时曾间歇性崩溃**：`GameViewport.IsUnique()`，`SLevelViewport.cpp:5196`。增加 UI 清理后仍复现，根因尚未确认。故默认启动及最终验收均采用 **New Editor Window (PIE)**。独立 PIE 最终正常退出、独立游戏预览正常退出，不表示嵌入式模式已经修复。复现日志保留为 `Validation/EmbeddedPIE_KnownIssue.log`。
-2. 这是 **Editor 开发构建 + 未烘焙游戏预览**，不是打包发布版本。没有验证 Windows、其他 UE 版本、独立安装包或分辨率组合。
-3. 自动化的部分关卡定位使用 `SetActorLocation`，时间阈值使用推进测试时钟加速。W/E/Tab 则通过 PlayerController 输入路径验证；没有声称真人已用物理键鼠走完全部路线。删除使用实际 UMG 回调，没有自动点击操作系统鼠标。
-4. 只灭火与原始失败的截止结算通过加速计时验证，没有等待完整 120 秒。默认时间仅为测试占位。
-5. 尚未进行陌生玩家测试，因此还不能认定“玩家能否理解心理限制与记忆删除的因果”已经得到用户体验验证。
-6. UE 启动阶段存在引擎自测试 `Condition failed` 日志及非 Mac SDK 缺失提示；它们发生在本项目验收之前。上表的“0 测试警告”是最终自动化报告统计，不代表整份引擎启动日志没有错误级别文本。
+```powershell
+${env:UE-LocalDataCachePath} = 'D:\UE_DDC'
+& "D:\UE_5.8\Engine\Binaries\Win64\UnrealEditor-Cmd.exe" `
+  "d:\antigravity_projects\gamejam\DirectorCutJam\DirectorCutJam.uproject" `
+  -ExecutePythonScript="d:\antigravity_projects\gamejam\DirectorCutJam\Scripts\create_map.py" `
+  -DCRebuildMap -unattended -nop4 -nosplash -NullRHI
+```
 
-## 未完成与待确认
+- **Result**: Exit code `0`; logged `LogPython: DC_MAP_CREATED /Game/Maps/Firefighter` (`Saved/Logs/DirectorCutJam-backup-2026.11.14-13.20.06.log` line `2219`, `2026.11.14-13.20.00`, rotated after the subsequent `13.22.55` PIE run) with `0` Python errors; regenerated `/Game/Materials/*` (including matte `M_Partition` `#6E7887`, `M_DoorFrame`, `M_Porch`, `M_Fire`, and `M_PaperMasked` with `FlipU` + 6 `MI_Paper_*` instances), `/Game/Data/DA_FirefighterPersona`, `/Game/Data/DA_FirefighterLevelConfig`, and all v2 S-curve actors in `/Game/Maps/Firefighter`.
 
-未完成：三星谜题、正式人物/火灾表现、正式撤销机制、额外 NPC 反应、重排、多正负效果、打包发行和陌生玩家测试。没有用额外系统填补这些未定设计。
+### 3. Live DX12 PIE Acceptance (`DirectorCut.PIE.Acceptance`)
 
-需要设计者确认：
+```powershell
+${env:UE-LocalDataCachePath} = 'D:\UE_DDC'
+& "D:\UE_5.8\Engine\Binaries\Win64\UnrealEditor-Cmd.exe" `
+  "d:\antigravity_projects\gamejam\DirectorCutJam\DirectorCutJam.uproject" `
+  /Game/Maps/Firefighter `
+  -ExecCmds="Automation RunTests DirectorCut.PIE.Acceptance; Quit" `
+  -ReportExportPath="d:\antigravity_projects\gamejam\DirectorCutJam\Saved\Validation\Win64Report" `
+  -DCCaptureEvidence -unattended -nop4 -nosplash
+```
 
-1. Persona 只在开始前编辑，还是演出中可编辑；编辑时是否暂停。
-2. 思想泡泡是否提示过去经历；当前默认短提示，支持两种配置。
-3. 正式游戏是否允许撤销删除、恢复 Persona；当前 F6 只是调试工具。
-4. 上司后续台词、20/45/120 秒时间阈值、失败/结算时机是否适用；当前全部标为测试占位。
-5. 救援、灭火采用即时交互是否足以验证本轮原型，以及最终进入/退出的表现方式。
-6. 三星解法、重排规则、多效果冲突、NPC 被干预后的额外反应。当前未定规则不在原型中生效。
+- **JSON Report**: [`Saved/Validation/Win64Report/index.json`](Saved/Validation/Win64Report/index.json)
+  - `reportCreatedOn`: `2026.11.14-13.22.55` (`dateTime`: `2026.11.14-13.22.31`)
+  - `totalDuration`: `24.256484985351562` seconds
+  - `state`: `Success` (`succeeded: 1`, `succeededWithWarnings: 0`, `failed: 0`, `notRun: 0`, `warnings: 0`, `errors: 0`)
+  - **Engine Log**: `Saved/Logs/DirectorCutJam.log` line `2311` confirms `Display: Test Completed. Result={Success} Name={Acceptance} Path={DirectorCut.PIE.Acceptance}`.
 
-具体参数与替换位置见 `README.md` 的测试占位表。
+> Note: UE 5.8 prints baseline engine `PreInit` `UnifiedErrorTest` diagnostics at editor startup prior to running `Automation RunTests`; those belong to engine bootstrap, not `DirectorCut.*` tests, and `Win64Report/index.json` records `0` warnings and `0` errors for `DirectorCut.PIE.Acceptance`.
+
+---
+
+## Automated Coverage (`DCValidation.cpp`)
+
+`DirectorCut.PIE.Acceptance` exercises an end-to-end 18-step (`Step 0–17`) PIE flow directly against [`/Game/Maps/Firefighter`](Scripts/create_map.py):
+
+1. **Pre-Take Retro Cute Journal & No-Clapperboard Audit**:
+   - Verifies `5` Persona blocks loaded (`Identity`, `Motivation`, `Daily_A`, `PunishmentMemory`, `Daily_B`), opaque journal backdrop covering viewport, clicking harmless `Daily_A` strikes it out (`bIsPresent == false`) while `PunishmentMemory` remains active, and recursive UMG text audit confirms zero clapperboard/studio strings (`"DIRECTOR'S CUT"`, `"SCENE 01"`, `"TAKE #"`, `"CUT!"`). Captures `Win64_PreTake.png`.
+2. **Blocked Doorway, Thought Bubble & Full `[R]` Retake**:
+   - Walks player to doorway `(350, -340)`, triggers `E` -> verifies `Denied_BlockedByPersona`, `UDCThoughtBubbleWidget` visible, `[E] ENTER` prompt visible, and captures `Win64_Blocked.png`.
+   - Triggers `[R]` (`RestartTakeAction`) -> verifies complete reset back to `PreTake` with `5/5` blocks present and no clapperboard UI.
+3. **Breakthrough, Missing Tool Thought Bubble, Hold-`E` Retention & Shortcut Unlock**:
+   - Cuts `PunishmentMemory`, clicks `ACTION!`, enters through doorway, verifies missing-tool `E` on `F1` triggers `Denied_MissingCapability` thought bubble, picks up Extinguisher `T` at `(320, 270)` (`Capability.ExtinguishFire`).
+   - Tests partial hold-`E` (`~0.9s` via `StartInteractInput`/`StopInteractInput`) on `F1` -> verifies `0.15s < RetainedSpraySeconds < 1.8s`, waits `0.2s` -> verifies `KeepStatic` retention, resumes hold-`E` to finish `F1` -> verifies `FireBlockerBox` shortcut collision disabled, remaining fires `= 2`, `AccumulatedEngulfDelaySeconds == 4.5s`.
+4. **S-Curve Rescue, Escort Freeze & `3/3` Star Finish**:
+   - After fresh `[R]` retake and doorway breakthrough, traverses S-curve (`G1 -> Z2 -> G2 -> Z3`) to Civilian `(885, -95)`, presses `E` -> verifies standalone Civilian card hidden and player switched to `CombinedEscortUninjured`, advances past `T_injure = 7.2s` -> verifies `CivilianState` remains **frozen** (`EscortingUninjured`) and `MaxStarContainers == 3`.
+   - Enters `SafeZone` (`+2` stars, Civilian parked beside Captain), picks up Extinguisher, captures `Win64_Inside3Star.png` mid-hold on `F2` inside the room (live Sky water hold ring), finishes `F2` and `F3` -> verifies `AllRemainingContainersFilled` with `3/3` stars on Take Result and captures `Win64_Result.png`.
+5. **Degraded Outcomes & Dead Non-Interactable**:
+   - **Injured (`2/2`)**: Crosses `T_injure` (`7.2s`) unescorted (`MaxStarContainers == 2`), initiates `EscortingInjured`, crosses `T_dead` (`18.5s`) proving frozen injured escort does not die, rescues and extinguishes all 3 fires -> `2/2` (preserving 1 burnt star remnant).
+   - **Dead (`1/1`)**: Crosses `T_dead` (`18.5s`) unescorted -> `Dead`, `MaxStarContainers == 1`; verifies `IsActionAvailable == false`, `[E]` hidden, and pressing `E` next to dead Civilian does nothing; extinguishes all fires -> `1/1`.
+   - **Room Engulfed (`0/1`)**: Crosses `T_engulf` (`26.0s`) -> `RoomEngulfedByFire` (`0/1`).
+6. **2.5D Upright & Grounded Card Invariant**:
+   - Across active steps, checks every visible `UDCPaperVisualComponent` (including player `CardMeshComp` and `BuddyCardMeshComp`) maintains `Pitch == 0`, `Roll == 0`, and Bottom-Center grounded at `Z == 0` within tolerance.
+
+---
+
+## Visual Inspection Summary (Win64 DX12 Evidence)
+
+All 4 captured screenshots under [`Validation/`](Validation/) were visually inspected:
+
+| Evidence File | Visual Verification Result |
+|---|---|
+| [`Validation/Win64_PreTake.png`](Validation/Win64_PreTake.png) | **Pass** — Opaque cocoa desk backdrop hiding room; cream journal sheet with 4 angled pastel corner tapes; `PERSONA` + `Fire Call` pill; dashed rule; 5 blocks (`Identity`, `Motivation`, `Daily_A` with ink strikethrough, `PunishmentMemory` & `Daily_B` in butter-gold with scissors); bottom-left legend (`FIXED / CUTTABLE / CUT`); bottom-right `ACTION!` button; zero clapperboard elements. |
+| [`Validation/Win64_Blocked.png`](Validation/Win64_Blocked.png) | **Pass** — Single perspective cutaway room displaying ceiling, `B1/B2` slate-taupe partitions, 3 active orange/amber fire spots (`F1/F2/F3`), red/pink Extinguisher at front-right, cyan/mint Civilian in `Z3`, Captain & green SafeZone on porch, `[E] ENTER` prompt at chest/door-handle height (`Z = 130`), dot-tail thought bubble (`"I must obey the Captain's orders... / last time I didn't, it never ended well."`) sitting cleanly above the doorway lintel (`Z = 142`, zero overlap with `[E]`), top-right `[R] Retake` pill, and bottom lock hint pill. |
+| [`Validation/Win64_Inside3Star.png`](Validation/Win64_Inside3Star.png) | **Pass** — Top-center star pill displaying `2` filled gold stars + `1` empty star container; rescued Civilian parked cleanly on SafeZone beside Captain; Player standing at `F2` behind `B1` with live Sky-blue clockwise water hold progress arc around `[E] EXTINGUISH`; top-right `[R] Retake` pill visible. |
+| [`Validation/Win64_Result.png`](Validation/Win64_Result.png) | **Pass** — Clean Retro Cute Journal Take Result modal with 2 top corner tapes, `3` gold filled stars, dashed dividers, `FIRES -> ALL OUT`, `CIVILIAN -> SAVED UNINJURED`, `STARS -> 3 / 3`, and sole `[R] Retake` button (no duplicate top-center `StarPopup`, no `CUT!`, no Next Level). |

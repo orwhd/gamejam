@@ -12,6 +12,8 @@ Plugins/*/Intermediate/
 .vscode/
 .idea/
 *.sln
+*.slnx
+.vsconfig
 *.suo
 *.user
 *.userosscache
